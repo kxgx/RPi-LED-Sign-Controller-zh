@@ -10,7 +10,7 @@ NC='\033[0m' # No Color
 
 echo -e "${BLUE}树莓派 LED 显示屏控制器 - 卸载脚本${NC}"
 echo -e "==============================================="
-echo -e "GitHub 仓库: ${GREEN}https://github.com/paviro/rpi-led-sign-controller${NC}"
+echo -e "GitHub 仓库: ${GREEN}https://github.com/kxgx/RPi-LED-Sign-Controller-zh${NC}"
 
 # Check if script is run with root privileges
 if [ "$EUID" -ne 0 ]; then
@@ -252,5 +252,5 @@ fi
 
 echo -e "\n${GREEN}卸载完成！${NC}"
 echo -e "树莓派 LED 显示屏控制器已从您的系统中移除。"
-echo -e "更多信息请访问: ${BLUE}https://github.com/paviro/rpi-led-sign-controller${NC}"
+echo -e "更多信息请访问: ${BLUE}https://github.com/kxgx/RPi-LED-Sign-Controller-zh${NC}"
 exit 0 

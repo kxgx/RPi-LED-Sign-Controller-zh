@@ -14,7 +14,7 @@ NODE_VERSION_TO_USE=""
 
 echo -e "${BLUE}树莓派 LED 显示屏控制器 - 安装与更新脚本${NC}"
 echo -e "==============================================="
-echo -e "GitHub 仓库: ${GREEN}https://github.com/paviro/rpi-led-sign-controller${NC}"
+echo -e "GitHub 仓库: ${GREEN}https://github.com/kxgx/RPi-LED-Sign-Controller-zh${NC}"
 
 # 介绍
 echo -e "\n${BLUE}关于本软件:${NC}"
@@ -108,7 +108,7 @@ check_debian_based() {
         echo -e "${RED}错误: 此脚本需要基于 Debian 的系统（推荐使用树莓派 OS Lite）${NC}"
         echo -e "${RED}在您的系统上未找到 'apt' 包管理器。${NC}"
         echo -e "${YELLOW}如果您使用的是非 Debian 系统但仍想安装，请参考:${NC}"
-        echo -e "${BLUE}https://github.com/paviro/rpi-led-sign-controller${NC}"
+        echo -e "${BLUE}https://github.com/kxgx/RPi-LED-Sign-Controller-zh${NC}"
         exit 1
     fi
     echo -e "${GREEN}检测到基于 Debian 的系统。${NC}"
@@ -165,7 +165,7 @@ ask_reconfigure() {
         echo -e ""
         echo -e "要卸载，请运行: ${BLUE}sudo bash /usr/local/src/rpi-led-sign-controller/scripts/uninstall.sh${NC}"
         echo -e ""
-        echo -e "更多信息请访问: ${BLUE}https://github.com/paviro/rpi-led-sign-controller${NC}"
+        echo -e "更多信息请访问: ${BLUE}https://github.com/kxgx/RPi-LED-Sign-Controller-zh${NC}"
         return 1  # Don't reconfigure
     fi
     
@@ -381,7 +381,7 @@ if [ $INSIDE_REPO -eq 0 ]; then
         
         echo -e "${YELLOW}正在以用户 $ACTUAL_USER 身份克隆仓库...${NC}"
         # Clone the repository as the regular user
-        sudo -u $ACTUAL_USER git clone https://github.com/paviro/rpi-led-sign-controller.git "$REPO_DIR"
+        sudo -u $ACTUAL_USER git clone https://github.com/kxgx/RPi-LED-Sign-Controller-zh.git "$REPO_DIR"
         cd "$REPO_DIR"
         REPO_JUST_CLONED=1
     fi
@@ -1229,5 +1229,5 @@ echo -e "  • 或者从源代码目录: ${BLUE}cd /usr/local/src/rpi-led-sign-c
 echo -e ""
 echo -e "要卸载，请运行: ${BLUE}sudo bash /usr/local/src/rpi-led-sign-controller/scripts/uninstall.sh${NC}"
 echo -e ""
-echo -e "更多信息请访问: ${BLUE}https://github.com/paviro/rpi-led-sign-controller${NC}"
+echo -e "更多信息请访问: ${BLUE}https://github.com/kxgx/RPi-LED-Sign-Controller-zh${NC}"
 exit 0
