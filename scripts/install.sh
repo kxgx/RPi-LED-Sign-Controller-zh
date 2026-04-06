@@ -287,7 +287,7 @@ check_debian_based
 
 # Check if script is run with root privileges
 if [ "$EUID" -ne 0 ]; then
-  echo -e "${RED}Please run as root (use sudo)${NC}"
+  echo -e "${RED}请使用 root 权限运行此脚本 (使用 sudo)${NC}"
   exit 1
 fi
 
@@ -463,20 +463,20 @@ if [ $INSIDE_BACKEND_REPO -eq 0 ]; then
 fi
 
 # Now handle the frontend repository
-echo -e "${YELLOW}Checking for frontend repository...${NC}"
+echo -e "${YELLOW}正在检查前端仓库...${NC}"
 FRONTEND_REPO_EXISTS=0
 if [ -d "$FRONTEND_REPO_DIR" ]; then
     FRONTEND_REPO_EXISTS=1
-    echo -e "${GREEN}Frontend repository already exists at $FRONTEND_REPO_DIR${NC}"
+    echo -e "${GREEN}前端仓库已存在于 $FRONTEND_REPO_DIR${NC}"
     
     # Check if any files in the frontend repo have incorrect ownership
     if [ "$(find "$FRONTEND_REPO_DIR" -not -user $ACTUAL_USER | wc -l)" -gt 0 ]; then
-        echo -e "${YELLOW}Fixing frontend repository permissions...${NC}"
+        echo -e "${YELLOW}正在修复前端仓库权限...${NC}"
         chown -R $ACTUAL_USER:$ACTUAL_USER "$FRONTEND_REPO_DIR"
-        echo -e "${GREEN}Frontend repository permissions fixed.${NC}"
+        echo -e "${GREEN}前端仓库权限已修复。${NC}"
     fi
 else
-    echo -e "${YELLOW}Frontend repository not found. Will clone it.${NC}"
+    echo -e "${YELLOW}未找到前端仓库，即将克隆。${NC}"
 fi
 
 # Track if we just cloned the frontend repo
@@ -484,14 +484,14 @@ FRONTEND_JUST_CLONED=0
 
 # Clone frontend repository if it doesn't exist
 if [ $FRONTEND_REPO_EXISTS -eq 0 ]; then
-    echo -e "${YELLOW}Creating frontend repository directory...${NC}"
+    echo -e "${YELLOW}正在创建前端仓库目录...${NC}"
     mkdir -p "$FRONTEND_REPO_DIR"
     chown $ACTUAL_USER:$ACTUAL_USER "$FRONTEND_REPO_DIR"
     
-    echo -e "${YELLOW}Cloning frontend repository as user $ACTUAL_USER...${NC}"
+    echo -e "${YELLOW}正在以用户 $ACTUAL_USER 身份克隆前端仓库...${NC}"
     # Clone the repository as the regular user
     sudo -u $ACTUAL_USER git clone https://github.com/kxgx/RPi-LED-Sign-Controller-Frontend-zh.git "$FRONTEND_REPO_DIR"
-    echo -e "${GREEN}Frontend repository cloned successfully.${NC}"
+    echo -e "${GREEN}前端仓库克隆成功。${NC}"
     FRONTEND_JUST_CLONED=1
 fi
 
@@ -503,12 +503,12 @@ FRONTEND_REBUILD_NEEDED=0
 # If we just cloned the backend repo, mark it as needing a build
 if [ $REPO_JUST_CLONED -eq 1 ]; then
     BACKEND_UPDATES_AVAILABLE=1
-    echo -e "${GREEN}Backend repository freshly cloned.${NC}"
+    echo -e "${GREEN}后端仓库已 freshly 克隆。${NC}"
 fi
 
 # Check for backend updates
 if [ $APP_INSTALLED -eq 1 ] && [ $REPO_JUST_CLONED -eq 0 ]; then
-    echo -e "${YELLOW}Fetching the latest changes from GitHub for backend...${NC}"
+    echo -e "${YELLOW}正在从 GitHub 获取后端最新更改...${NC}"
     cd "$REPO_DIR"
     sudo -u $ACTUAL_USER git fetch
 
@@ -516,26 +516,26 @@ if [ $APP_INSTALLED -eq 1 ] && [ $REPO_JUST_CLONED -eq 0 ]; then
     git_status=$(sudo -u $ACTUAL_USER git status -uno)
     if echo "$git_status" | grep -q "Your branch is behind"; then
         BACKEND_UPDATES_AVAILABLE=1
-        echo -e "${YELLOW}Backend updates are available.${NC}"
+        echo -e "${YELLOW}发现后端可用更新。${NC}"
         
         # Stash local changes before pulling updates
         stash_repo_changes "$REPO_DIR" $ACTUAL_USER "Backend" "BACKEND_STASHED_SECONDARY"
 
         # Pull changes as the regular user
         if ! sudo -u $ACTUAL_USER git pull; then
-            echo -e "${RED}Failed to update backend repository.${NC}"
+            echo -e "${RED}更新后端仓库失败。${NC}"
             if [ "${BACKEND_STASHED_SECONDARY:-0}" -eq 1 ]; then
-                echo -e "${YELLOW}Your previous local changes were stashed. Use 'git stash list' followed by 'git stash pop' to restore them manually.${NC}"
+                echo -e "${YELLOW}您之前的本地更改已暂存。请使用 'git stash list' 后跟 'git stash pop' 手动恢复它们。${NC}"
             fi
             exit 1
         fi
 
         if [ "${BACKEND_STASHED_SECONDARY:-0}" -eq 1 ]; then
-            echo -e "${YELLOW}Local backend changes remain stashed. Run 'git stash list' and 'git stash pop' to restore them when ready.${NC}"
+            echo -e "${YELLOW}本地后端更改仍保持暂存状态。准备好后运行 'git stash list' 和 'git stash pop' 恢复它们。${NC}"
         fi
-        echo -e "${GREEN}Backend repository updated successfully.${NC}"
+        echo -e "${GREEN}后端仓库更新成功。${NC}"
     else
-        echo -e "${GREEN}Backend repository is already up to date.${NC}"
+        echo -e "${GREEN}后端仓库已是最新版本。${NC}"
     fi
     
     # Create update marker file for backend with proper ownership
@@ -548,11 +548,11 @@ fi
 # If frontend was just cloned, mark it for rebuild
 if [ $FRONTEND_JUST_CLONED -eq 1 ]; then
     FRONTEND_REBUILD_NEEDED=1
-    echo -e "${GREEN}Frontend repository freshly cloned.${NC}"
+    echo -e "${GREEN}前端仓库已 freshly 克隆。${NC}"
 fi
 
 # Check for frontend updates
-echo -e "${YELLOW}Checking for frontend updates...${NC}"
+echo -e "${YELLOW}正在检查前端更新...${NC}"
 
 # Only if frontend repo exists and wasn't just cloned, check for updates
 if [ $FRONTEND_REPO_EXISTS -eq 1 ] && [ $FRONTEND_JUST_CLONED -eq 0 ]; then
@@ -562,27 +562,27 @@ if [ $FRONTEND_REPO_EXISTS -eq 1 ] && [ $FRONTEND_JUST_CLONED -eq 0 ]; then
     git_status=$(sudo -u $ACTUAL_USER git status -uno)
     if echo "$git_status" | grep -q "Your branch is behind"; then
         FRONTEND_UPDATES_AVAILABLE=1
-        echo -e "${YELLOW}Frontend updates are available.${NC}"
+        echo -e "${YELLOW}发现前端可用更新。${NC}"
         
         # Stash local changes before pulling updates
         stash_repo_changes "$FRONTEND_REPO_DIR" $ACTUAL_USER "Frontend" "FRONTEND_STASHED"
 
         # Pull changes as the regular user
         if ! sudo -u $ACTUAL_USER git pull; then
-            echo -e "${RED}Failed to update frontend repository.${NC}"
+            echo -e "${RED}更新前端仓库失败。${NC}"
             if [ "${FRONTEND_STASHED:-0}" -eq 1 ]; then
-                echo -e "${YELLOW}Your previous local changes were stashed. Use 'git stash list' followed by 'git stash pop' to restore them manually.${NC}"
+                echo -e "${YELLOW}您之前的本地更改已暂存。请使用 'git stash list' 后跟 'git stash pop' 手动恢复它们。${NC}"
             fi
             exit 1
         fi
 
         if [ "${FRONTEND_STASHED:-0}" -eq 1 ]; then
-            echo -e "${YELLOW}Local frontend changes remain stashed. Run 'git stash list' and 'git stash pop' to restore them when ready.${NC}"
+            echo -e "${YELLOW}本前端更改仍保持暂存状态。准备好后运行 'git stash list' 和 'git stash pop' 恢复它们。${NC}"
         fi
-        echo -e "${GREEN}Frontend repository updated successfully.${NC}"
+        echo -e "${GREEN}前端仓库更新成功。${NC}"
         FRONTEND_REBUILD_NEEDED=1
     else
-        echo -e "${GREEN}Frontend repository is already up to date.${NC}"
+        echo -e "${GREEN}前端仓库已是最新版本。${NC}"
     fi
 fi
 
@@ -590,51 +590,51 @@ fi
 FRONTEND_FILES_EXIST=0
 if [ -d "$REPO_DIR/static" ] && [ -d "$REPO_DIR/static/_next" ] && [ "$(ls -A "$REPO_DIR/static" 2>/dev/null)" ]; then
     # Check if the static directory has actual content and wasn't emptied by an update
-    echo -e "${GREEN}Frontend files already exist in backend static directory.${NC}"
+    echo -e "${GREEN}前端文件已存在于后端 static 目录中。${NC}"
     FRONTEND_FILES_EXIST=1
 else
     # Static directory doesn't exist, is empty, or doesn't have the Next.js build files
-    echo -e "${YELLOW}Frontend files missing or incomplete in backend static directory.${NC}"
+    echo -e "${YELLOW}后端 static 目录中缺少或不完整的前端文件。${NC}"
     # Force rebuild of frontend
     FRONTEND_REBUILD_NEEDED=1
 fi
 
 # Build the frontend if needed or if backend was updated or if frontend files don't exist
 if [ $FRONTEND_REBUILD_NEEDED -eq 1 ] || [ $BACKEND_UPDATES_AVAILABLE -eq 1 ] || [ $FRONTEND_FILES_EXIST -eq 0 ]; then
-    echo -e "${YELLOW}Building frontend...${NC}"
+    echo -e "${YELLOW}正在构建前端...${NC}"
     cd "$FRONTEND_REPO_DIR"
     
     # Install dependencies and build
-    echo -e "${YELLOW}Installing frontend dependencies...${NC}"
+    echo -e "${YELLOW}正在安装前端依赖...${NC}"
     run_with_node "$ACTUAL_USER" "$ACTUAL_HOME" "$NODE_VERSION_TO_USE" npm install
     
-    echo -e "${YELLOW}Building frontend...${NC}"
+    echo -e "${YELLOW}正在构建前端...${NC}"
     run_with_node "$ACTUAL_USER" "$ACTUAL_HOME" "$NODE_VERSION_TO_USE" npm run build
     
-    echo -e "${GREEN}Frontend built successfully.${NC}"
+    echo -e "${GREEN}前端构建成功。${NC}"
     
     # Ensure static directory exists
     mkdir -p "$REPO_DIR/static"
     
     # Clean the static directory to remove any old files
-    echo -e "${YELLOW}Cleaning static directory...${NC}"
+    echo -e "${YELLOW}正在清理 static 目录...${NC}"
     rm -rf "$REPO_DIR/static/"*
-    echo -e "${GREEN}Static directory cleaned.${NC}"
+    echo -e "${GREEN}Static 目录已清理。${NC}"
     
     # Copy the built files to the backend's static folder
-    echo -e "${YELLOW}Copying frontend files to backend...${NC}"
+    echo -e "${YELLOW}正在将前端文件复制到后端...${NC}"
     cp -r "$FRONTEND_REPO_DIR/out/"* "$REPO_DIR/static/"
-    echo -e "${GREEN}Frontend files copied successfully.${NC}"
+    echo -e "${GREEN}前端文件复制成功。${NC}"
     
     # Force rebuilding backend if we rebuilt frontend
     # This is necessary because frontend files get embedded in the backend binary
     if [ $BACKEND_UPDATES_AVAILABLE -eq 0 ]; then
-        echo -e "${YELLOW}Frontend was updated. Marking backend for rebuild...${NC}"
+        echo -e "${YELLOW}前端已更新。标记后端需要重新构建...${NC}"
         echo "updated=$(date +%s)" > "$REPO_DIR/.update_status"
         chown $ACTUAL_USER:$ACTUAL_USER "$REPO_DIR/.update_status"
     fi
 else
-    echo -e "${GREEN}Skipping frontend build as files already exist and no updates were found.${NC}"
+    echo -e "${GREEN}跳过前端构建，因为文件已存在且未发现更新。${NC}"
 fi
 
 # Build the application if new installation, update pulled, or rebuild requested
@@ -940,11 +940,11 @@ configure_panel() {
     fi
     
     echo -e "\n${BLUE}面板尺寸${NC}"
-    echo "Default: $DEFAULT_ROWS rows, $DEFAULT_COLS columns"
-    ROWS=$(get_input "Number of rows (default: $DEFAULT_ROWS)" $DEFAULT_ROWS)
-    COLS=$(get_input "Number of columns (default: $DEFAULT_COLS)" $DEFAULT_COLS)
-    CHAIN_LENGTH=$(get_input "Number of panels daisy-chained together (default: $DEFAULT_CHAIN_LENGTH)" $DEFAULT_CHAIN_LENGTH)
-    PARALLEL=$(get_input "Number of chains to run in parallel (1-3) (default: $DEFAULT_PARALLEL)" $DEFAULT_PARALLEL)
+    echo "默认: $DEFAULT_ROWS 行, $DEFAULT_COLS 列"
+    ROWS=$(get_input "行数 (默认: $DEFAULT_ROWS)" $DEFAULT_ROWS)
+    COLS=$(get_input "列数 (默认: $DEFAULT_COLS)" $DEFAULT_COLS)
+    CHAIN_LENGTH=$(get_input "串联的面板数量 (默认: $DEFAULT_CHAIN_LENGTH)" $DEFAULT_CHAIN_LENGTH)
+    PARALLEL=$(get_input "并行运行的链数 (1-3) (默认: $DEFAULT_PARALLEL)" $DEFAULT_PARALLEL)
     
     echo -e "\n${BLUE}硬件配置${NC}"
     echo "常见硬件映射:"
@@ -955,7 +955,7 @@ configure_panel() {
     echo "  - classic - Early version of matrix wiring"
     echo "  - classic-pi1 - Early version for Pi 1 Rev A"
     
-    HARDWARE_MAPPING=$(get_input "Hardware mapping (default: $DEFAULT_HARDWARE_MAPPING)" $DEFAULT_HARDWARE_MAPPING)
+    HARDWARE_MAPPING=$(get_input "硬件映射 (默认: $DEFAULT_HARDWARE_MAPPING)" $DEFAULT_HARDWARE_MAPPING)
     
     echo -e "\n${BLUE}GPIO 设置${NC}"
     echo "新树莓派型号需要 GPIO 减速:"
@@ -963,12 +963,12 @@ configure_panel() {
     echo "  - Pi 4: 通常为值 3 或 4"
     echo "  - (留空以自动选择)"
     
-    GPIO_SLOWDOWN=$(get_input "GPIO slowdown factor (leave empty for auto)" "$DEFAULT_GPIO_SLOWDOWN")
+    GPIO_SLOWDOWN=$(get_input "GPIO 减速因子 (留空自动选择)" "$DEFAULT_GPIO_SLOWDOWN")
     
     echo -e "\n${BLUE}面板性能设置${NC}"
-    PWM_BITS=$(get_input "PWM bits (1-11) (default: $DEFAULT_PWM_BITS)" $DEFAULT_PWM_BITS)
-    PWM_LSB_NANOSECONDS=$(get_input "PWM LSB nanoseconds (base time-unit) (default: $DEFAULT_PWM_LSB_NANOSECONDS)" $DEFAULT_PWM_LSB_NANOSECONDS)
-    DITHER_BITS=$(get_input "Dither bits (0 for no dithering) (default: $DEFAULT_DITHER_BITS)" $DEFAULT_DITHER_BITS)
+    PWM_BITS=$(get_input "PWM 位数 (1-11) (默认: $DEFAULT_PWM_BITS)" $DEFAULT_PWM_BITS)
+    PWM_LSB_NANOSECONDS=$(get_input "PWM LSB 纳秒 (基本时间单位) (默认: $DEFAULT_PWM_LSB_NANOSECONDS)" $DEFAULT_PWM_LSB_NANOSECONDS)
+    DITHER_BITS=$(get_input "抖动位数 (0 为不抖动) (默认: $DEFAULT_DITHER_BITS)" $DEFAULT_DITHER_BITS)
     
     echo -e "\n${BLUE}行地址设置${NC}"
     echo "行设置器选项:"
@@ -978,7 +978,7 @@ configure_panel() {
     echo "  - abcshiftregister - ABC shift register selection"
     echo "  - sm5266 - SM5266 with ABC shifter + DE direct"
     
-    ROW_SETTER=$(get_input "Row setter (default: $DEFAULT_ROW_SETTER)" $DEFAULT_ROW_SETTER)
+    ROW_SETTER=$(get_input "行设置器 (默认: $DEFAULT_ROW_SETTER)" $DEFAULT_ROW_SETTER)
     
     echo -e "\n${BLUE}颜色设置${NC}"
     echo "常见 LED 序列:"
@@ -989,13 +989,13 @@ configure_panel() {
     echo "  - BRG"
     echo "  - BGR"
     
-    LED_SEQUENCE=$(get_input "LED color sequence (default: $DEFAULT_LED_SEQUENCE)" $DEFAULT_LED_SEQUENCE)
+    LED_SEQUENCE=$(get_input "LED 颜色序列 (默认: $DEFAULT_LED_SEQUENCE)" $DEFAULT_LED_SEQUENCE)
     
     # Panel type
     echo -e "\n${BLUE}高级面板设置${NC}"
     echo "某些面板需要特殊初始化，例如 FM6126A"
     
-    PANEL_TYPE=$(get_input "Panel type (leave empty if not needed)" "$DEFAULT_PANEL_TYPE")
+    PANEL_TYPE=$(get_input "面板类型 (不需要则留空)" "$DEFAULT_PANEL_TYPE")
     
     # Multiplexing 
     echo "多路复用选项:"
@@ -1043,32 +1043,32 @@ configure_panel() {
     esac
     
     # Pixel mapper
-    echo "Pixel mapper (semicolon-separated list, e.g., 'U-mapper;Rotate:90')"
-    echo "(Leave empty if not needed)"
+    echo "像素映射器 (分号分隔列表, 例如: 'U-mapper;Rotate:90')"
+    echo "(不需要则留空)"
     
-    PIXEL_MAPPER=$(get_input "Pixel mapper (leave empty for none)" "$DEFAULT_PIXEL_MAPPER")
+    PIXEL_MAPPER=$(get_input "像素映射器 (不需要则留空)" "$DEFAULT_PIXEL_MAPPER")
     
     # Advanced switch options
     echo -e "\n${BLUE}附加选项${NC}"
-    INTERLACED=$(get_yes_no "Enable interlaced scan mode?" "n")
+    INTERLACED=$(get_yes_no "启用隔行扫描模式?" "n")
 
     if [[ "$DRIVER" == "binding" ]]; then
-        NO_HARDWARE_PULSE=$(get_yes_no "Disable hardware pin-pulse generation?" "n")
-        SHOW_REFRESH=$(get_yes_no "Show refresh rate statistics on terminal?" "n")
-        INVERSE_COLORS=$(get_yes_no "Invert display colors?" "n")
+        NO_HARDWARE_PULSE=$(get_yes_no "禁用硬件引脚脉冲生成?" "n")
+        SHOW_REFRESH=$(get_yes_no "在终端显示刷新率统计?" "n")
+        INVERSE_COLORS=$(get_yes_no "反转显示颜色?" "n")
     fi
     
     if [[ "$DRIVER" == "native" ]]; then
-        echo "Raspberry Pi chip model (e.g., BCM2711, leave empty for auto)"
-        PI_CHIP=$(get_input "Pi chip model (leave empty for auto)" "$DEFAULT_PI_CHIP")
+        echo "树莓派芯片型号 (例如: BCM2711, 留空自动检测)"
+        PI_CHIP=$(get_input "Pi 芯片型号 (留空自动检测)" "$DEFAULT_PI_CHIP")
     fi
     
-    LIMIT_REFRESH_RATE=$(get_input "Limit refresh rate (Hz, 0 for unlimited) (default: $DEFAULT_LIMIT_REFRESH_RATE)" $DEFAULT_LIMIT_REFRESH_RATE)
-    MAX_BRIGHTNESS=$(get_input "Maximum brightness limit (0-100) (default: $DEFAULT_MAX_BRIGHTNESS)" $DEFAULT_MAX_BRIGHTNESS)
+    LIMIT_REFRESH_RATE=$(get_input "限制刷新率 (Hz, 0 为不限制) (默认: $DEFAULT_LIMIT_REFRESH_RATE)" $DEFAULT_LIMIT_REFRESH_RATE)
+    MAX_BRIGHTNESS=$(get_input "最大亮度限制 (0-100) (默认: $DEFAULT_MAX_BRIGHTNESS)" $DEFAULT_MAX_BRIGHTNESS)
     
     echo -e "\n${BLUE}Web 界面${NC}"
-    WEB_PORT=$(get_input "Web server port (default: $DEFAULT_WEB_PORT)" $DEFAULT_WEB_PORT)
-    WEB_INTERFACE=$(get_input "Network interface to bind to (default: $DEFAULT_WEB_INTERFACE)" $DEFAULT_WEB_INTERFACE)
+    WEB_PORT=$(get_input "Web 服务器端口 (默认: $DEFAULT_WEB_PORT)" $DEFAULT_WEB_PORT)
+    WEB_INTERFACE=$(get_input "绑定的网络接口 (默认: $DEFAULT_WEB_INTERFACE)" $DEFAULT_WEB_INTERFACE)
 }
 
 # Main configuration flow
