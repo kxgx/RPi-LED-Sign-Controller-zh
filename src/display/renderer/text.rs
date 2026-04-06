@@ -231,18 +231,24 @@ impl TextRenderer {
         let scaled_font = font.as_scaled(16.0); // 16px height for better fit
         let [r, g, b] = self.ctx.apply_brightness(self.content.color);
         
+        debug!("Rendering text: '{}', text_width: {}, display: {}x{}", 
+               self.content.text, self.text_width, self.ctx.display_width, self.ctx.display_height);
+        
         // Vertical centering
         let ascent = scaled_font.ascent();
         let y_pos = ((self.ctx.display_height as f32) / 2.0) + (ascent / 2.0);
+        debug!("y_pos: {}, ascent: {}", y_pos, ascent);
 
         let x_start = if self.content.scroll {
             self.scroll_position
         } else {
             ((self.ctx.display_width as f32) - self.text_width) / 2.0
         };
+        debug!("x_start: {}", x_start);
 
         // Render each glyph
         let mut caret = x_start;
+        let mut pixel_count = 0;
         for c in self.content.text.chars() {
             let glyph_id = font.glyph_id(c);
             let glyph = ab_glyph::Glyph {
@@ -254,6 +260,8 @@ impl TextRenderer {
             if let Some(outlined) = scaled_font.outline_glyph(glyph.clone()) {
                 // Get the bounding box in local glyph coordinates
                 let bb = outlined.px_bounds();
+                debug!("Char '{}': position=({}, {}), bounds=({}, {}, {}, {})",
+                       c, glyph.position.x, glyph.position.y, bb.min.x, bb.min.y, bb.max.x, bb.max.y);
                 
                 // Draw the glyph pixels
                 outlined.draw(|x, y, v| {
@@ -267,13 +275,17 @@ impl TextRenderer {
                         if px >= 0 && px < self.ctx.display_width as i32 &&
                            py >= 0 && py < self.ctx.display_height as i32 {
                             canvas.set_pixel(px as usize, py as usize, r, g, b);
+                            pixel_count += 1;
                         }
                     }
                 });
                 
                 // Move to next character
                 caret += scaled_font.h_advance(glyph.id);
+            } else {
+                debug!("Char '{}' has no outline", c);
             }
         }
+        debug!("Total pixels drawn: {}", pixel_count);
     }
 }
