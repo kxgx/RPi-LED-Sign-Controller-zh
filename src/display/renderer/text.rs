@@ -214,7 +214,7 @@ impl TextRenderer {
     // Calculate text width based on character count and font metrics
     fn calculate_text_width(&mut self) {
         if let Some(font) = &self.font {
-            let scaled_font = font.as_scaled(20.0); // 20px height
+            let scaled_font = font.as_scaled(16.0); // 16px height
             let mut total_advance = 0.0;
             for c in self.content.text.chars() {
                 let glyph_id = font.glyph_id(c);
@@ -228,12 +228,12 @@ impl TextRenderer {
     }
 
     fn render_with_font(&self, canvas: &mut Box<dyn LedCanvas>, font: &FontArc) {
-        let scaled_font = font.as_scaled(20.0); // 20px height
+        let scaled_font = font.as_scaled(16.0); // 16px height for better fit
         let [r, g, b] = self.ctx.apply_brightness(self.content.color);
         
         // Vertical centering
         let ascent = scaled_font.ascent();
-        let y_pos = ((self.ctx.display_height as f32) / 2.0) - (ascent / 2.0);
+        let y_pos = ((self.ctx.display_height as f32) / 2.0) + (ascent / 2.0);
 
         let x_start = if self.content.scroll {
             self.scroll_position
@@ -247,24 +247,31 @@ impl TextRenderer {
             let glyph_id = font.glyph_id(c);
             let glyph = ab_glyph::Glyph {
                 id: glyph_id,
-                scale: ab_glyph::PxScale { x: 20.0, y: 20.0 },
+                scale: ab_glyph::PxScale { x: 16.0, y: 16.0 },
                 position: ab_glyph::point(caret, y_pos),
             };
+            
             if let Some(outlined) = scaled_font.outline_glyph(glyph.clone()) {
+                // Get the bounding box in local glyph coordinates
                 let bb = outlined.px_bounds();
-                let draw_x = bb.min.x;
-                let draw_y = bb.min.y;
-
+                
+                // Draw the glyph pixels
                 outlined.draw(|x, y, v| {
                     if v > 0.0 {
-                        let px = (draw_x + x as f32) as i32;
-                        let py = (draw_y + y as f32) as i32;
+                        // Convert local glyph coordinates to canvas coordinates
+                        // by adding the glyph's position offset
+                        let px = (glyph.position.x + bb.min.x + x as f32).round() as i32;
+                        let py = (glyph.position.y + bb.min.y + y as f32).round() as i32;
+                        
+                        // Bounds check
                         if px >= 0 && px < self.ctx.display_width as i32 &&
                            py >= 0 && py < self.ctx.display_height as i32 {
                             canvas.set_pixel(px as usize, py as usize, r, g, b);
                         }
                     }
                 });
+                
+                // Move to next character
                 caret += scaled_font.h_advance(glyph.id);
             }
         }
