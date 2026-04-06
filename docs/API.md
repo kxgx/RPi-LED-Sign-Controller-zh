@@ -1,45 +1,45 @@
-# LED Sign Controller API Documentation
+# LED 显示屏控制器 API 文档
 
-This document describes the API endpoints available for the LED sign controller application.
+本文档描述了 LED 显示屏控制器应用程序可用的 API 端点。
 
-## Table of Contents
-- [Playlist Management](#playlist-management)
-  - [Get All Playlist Items](#get-all-playlist-items)
-  - [Create Playlist Item](#create-playlist-item)
-  - [Get Specific Playlist Item](#get-specific-playlist-item)
-  - [Update Playlist Item](#update-playlist-item)
-  - [Delete Playlist Item](#delete-playlist-item)
-  - [Reorder Playlist Items](#reorder-playlist-items)
-- [Content Payloads](#content-payloads)
-  - [Text Content](#text-content)
-  - [Image Content](#image-content)
-- [Settings](#settings)
-  - [Get Brightness](#get-brightness)
-  - [Update Brightness](#update-brightness)
-- [Preview Mode](#preview-mode)
-  - [Start Preview Mode](#start-preview-mode)
-  - [Update Preview Content](#update-preview-content)
-  - [Exit Preview Mode](#exit-preview-mode)
-  - [Check Preview Status](#check-preview-status)
-  - [Ping Preview Session](#ping-preview-session)
-  - [Check Session Ownership](#check-session-ownership)
-- [Image Library](#image-library)
-  - [Upload Image](#upload-image)
-  - [Fetch Image](#fetch-image)
-- [Real-time Events](#real-time-events)
-  - [Brightness Events](#brightness-events)
-  - [Editor Lock Events](#editor-lock-events)
-  - [Playlist Events](#playlist-events)
+## 目录
+- [播放列表管理](#播放列表管理)
+  - [获取所有播放列表项](#获取所有播放列表项)
+  - [创建播放列表项](#创建播放列表项)
+  - [获取特定播放列表项](#获取特定播放列表项)
+  - [更新播放列表项](#更新播放列表项)
+  - [删除播放列表项](#删除播放列表项)
+  - [重新排序播放列表项](#重新排序播放列表项)
+- [内容载荷](#内容载荷)
+  - [文本内容](#文本内容)
+  - [图片内容](#图片内容)
+- [设置](#设置)
+  - [获取亮度](#获取亮度)
+  - [更新亮度](#更新亮度)
+- [预览模式](#预览模式)
+  - [启动预览模式](#启动预览模式)
+  - [更新预览内容](#更新预览内容)
+  - [退出预览模式](#退出预览模式)
+  - [检查预览状态](#检查预览状态)
+  - [心跳检测预览会话](#心跳检测预览会话)
+  - [检查会话所有权](#检查会话所有权)
+- [图片库](#图片库)
+  - [上传图片](#上传图片)
+  - [获取图片](#获取图片)
+- [实时事件](#实时事件)
+  - [亮度事件](#亮度事件)
+  - [编辑器锁定事件](#编辑器锁定事件)
+  - [播放列表事件](#播放列表事件)
 
-## Playlist Management
+## 播放列表管理
 
-### Get All Playlist Items
+### 获取所有播放列表项
 
-Retrieves all items in the playlist.
+获取播放列表中的所有项目。
 
 - **URL**: `/api/playlist/items`
-- **Method**: `GET`
-- **Response**: Array of playlist items
+- **方法**: `GET`
+- **响应**: 播放列表项数组
   
 ```json
 [
@@ -86,14 +86,14 @@ Retrieves all items in the playlist.
 ]
 ```
 
-### Create Playlist Item
+### 创建播放列表项
 
-Creates a new playlist item.
+创建一个新的播放列表项。
 
 - **URL**: `/api/playlist/items`
-- **Method**: `POST`
-- **Body**: Playlist item (ID will be generated if not provided)
-- **Response**: Created playlist item with ID
+- **方法**: `POST`
+- **请求体**: 播放列表项（如果未提供 ID，将自动生成）
+- **响应**: 包含 ID 的已创建播放列表项
 
 ```json
 {
@@ -115,68 +115,68 @@ Creates a new playlist item.
 }
 ```
 
-### Get Specific Playlist Item
+### 获取特定播放列表项
 
-Retrieves a specific playlist item by ID.
-
-- **URL**: `/api/playlist/items/:id`
-- **Method**: `GET`
-- **Response**: Playlist item
-- **Error Codes**: 
-  - `404` - Item not found
-
-### Update Playlist Item
-
-Updates a specific playlist item.
+通过 ID 获取特定的播放列表项。
 
 - **URL**: `/api/playlist/items/:id`
-- **Method**: `PUT`
-- **Body**: Updated playlist item
-- **Response**: Updated playlist item
-- **Error Codes**:
-  - `404` - Item not found
+- **方法**: `GET`
+- **响应**: 播放列表项
+- **错误代码**: 
+  - `404` - 未找到项目
 
-### Delete Playlist Item
+### 更新播放列表项
 
-Deletes a specific playlist item.
+更新特定的播放列表项。
 
 - **URL**: `/api/playlist/items/:id`
-- **Method**: `DELETE`
-- **Response**: Status code only
-- **Error Codes**:
-  - `404` - Item not found
+- **方法**: `PUT`
+- **请求体**: 更新后的播放列表项
+- **响应**: 更新后的播放列表项
+- **错误代码**:
+  - `404` - 未找到项目
 
-### Reorder Playlist Items
+### 删除播放列表项
 
-Reorders all playlist items.
+删除特定的播放列表项。
+
+- **URL**: `/api/playlist/items/:id`
+- **方法**: `DELETE`
+- **响应**: 仅状态码
+- **错误代码**:
+  - `404` - 未找到项目
+
+### 重新排序播放列表项
+
+重新排序所有播放列表项。
 
 - **URL**: `/api/playlist/reorder`
-- **Method**: `PUT`
-- **Body**: Ordered array of item IDs
+- **方法**: `PUT`
+- **请求体**: 有序的项目 ID 数组
 ```json
 {
   "item_ids": ["id1", "id2", "id3"]
 }
 ```
-- **Response**: Reordered list of playlist items
-- **Error Codes**:
-  - `400` - Invalid reorder request (missing items or incorrect count)
+- **响应**: 重新排序后的播放列表项列表
+- **错误代码**:
+  - `400` - 无效的重新排序请求（缺少项目或数量不正确）
 
-## Content Payloads
+## 内容载荷
 
-Every playlist or preview item contains a `content` object. The outer `content.type` helps the UI/editor know which tool to render, while the nested `content.data` is a tagged union that repeats the `type` field and carries the actual properties for that content kind.
+每个播放列表或预览项都包含一个 `content` 对象。外层的 `content.type` 帮助 UI/编辑器知道要渲染哪个工具，而嵌套的 `content.data` 是一个带标签的联合体，它重复了 `type` 字段并携带该内容类型的实际属性。
 
-### Text Content
+### 文本内容
 
-Text payloads are identical to the original implementation but now live inside `content.data`.
+文本载荷与原始实现相同，但现在位于 `content.data` 内部。
 
-- `text` - Raw UTF-8 text
-- `scroll` - When `true`, the message scrolls and you must provide `repeat_count` instead of `duration`
-- `color` - Base RGB color triplet
-- `speed` - Scroll speed (0-100)
-- `text_segments` - Optional overrides for colors/formatting (see frontend docs)
+- `text` - 原始 UTF-8 文本
+- `scroll` - 当为 `true` 时，消息会滚动，你必须提供 `repeat_count` 而不是 `duration`
+- `color` - 基础 RGB 颜色三元组
+- `speed` - 滚动速度 (0-100)
+- `text_segments` - 用于颜色/格式化的可选覆盖（见前端文档）
 
-Static text (`scroll: false`) requires `duration` and must omit `repeat_count`. Scrolling text requires `repeat_count` and must omit `duration`.
+静态文本 (`scroll: false`) 需要 `duration` 且必须省略 `repeat_count`。滚动文本需要 `repeat_count` 且必须省略 `duration`。
 
 ```json
 "content": {
@@ -194,18 +194,18 @@ Static text (`scroll: false`) requires `duration` and must omit `repeat_count`. 
 }
 ```
 
-### Image Content
+### 图片内容
 
-Images can be static or animated. Upload images via `POST /api/images` to obtain an `image_id`. The backend stores the binary PNG under `/var/lib/led-matrix-controller/images`, and playlist items simply reference that ID.
+图片可以是静态的也可以是动画的。通过 `POST /api/images` 上传图片以获取 `image_id`。后端将二进制 PNG 存储在 `/var/lib/led-matrix-controller/images` 下，播放列表项只需引用该 ID。
 
-- `image_id` - UUID returned by the upload endpoint
-- `natural_width` / `natural_height` - Source dimensions so the editor can scale accurately
-- `transform` - `{ "x": number, "y": number, "scale": number }` describing how the bitmap is positioned relative to the panel's top-left corner
-- `animation` *(optional)* - Keyframe animation with at least two entries when present
-  - `keyframes` - Each entry has `timestamp_ms`, `x`, `y`, and `scale`
-  - `iterations` - Number of loops (`null` = infinite)
+- `image_id` - 上传端点返回的 UUID
+- `natural_width` / `natural_height` - 源尺寸，以便编辑器可以准确缩放
+- `transform` - `{ "x": number, "y": number, "scale": number }` 描述位图相对于面板左上角的定位方式
+- `animation` *(可选)* - 关键帧动画，如果存在则至少有两个条目
+  - `keyframes` - 每个条目都有 `timestamp_ms`、`x`、`y` 和 `scale`
+  - `iterations` - 循环次数 (`null` = 无限)
 
-Static images require `duration` and must omit `repeat_count`. Animated images (two or more keyframes) require `repeat_count`, must omit `duration`, and the frontend enforces the minimum keyframe count.
+静态图片需要 `duration` 且必须省略 `repeat_count`。动画图片（两个或更多关键帧）需要 `repeat_count`，必须省略 `duration`，且前端会强制执行最小关键帧数。
 
 ```json
 "content": {
@@ -229,13 +229,13 @@ Static images require `duration` and must omit `repeat_count`. Animated images (
 
 Set `"animation": null` (or omit it) to display a static image with a fixed transform.
 
-### Clock Content
+### 时钟内容
 
-Clock entries render the Raspberry Pi's local time centered on the display. They always use `duration` for timing and must omit `repeat_count`.
+时钟条目会在显示屏中央渲染树莓派的本地时间。它们始终使用 `duration` 进行计时，且必须省略 `repeat_count`。
 
-- `format` - `"24h"` or `"12h"`
-- `show_seconds` - `true` to update every second, `false` for minutes only
-- `color` - RGB tuple for the digits
+- `format` - `"24h"` 或 `"12h"`
+- `show_seconds` - `true` 表示每秒更新，`false` 表示仅分钟更新
+- `color` - 数字的 RGB 元组
 
 ```json
 "content": {
@@ -249,51 +249,51 @@ Clock entries render the Raspberry Pi's local time centered on the display. They
 }
 ```
 
-Clock items support the same border effects as other playlist entries.
+时钟项支持与其他播放列表条目相同的边框效果。
 
-## Settings
+## 设置
 
-### Get Brightness
+### 获取亮度
 
-Retrieves the current brightness setting.
-
-- **URL**: `/api/settings/brightness`
-- **Method**: `GET`
-- **Response**: Current brightness (0-100)
-```json
-{
-  "brightness": 75
-}
-```
-
-### Update Brightness
-
-Updates the display brightness.
+获取当前的亮度设置。
 
 - **URL**: `/api/settings/brightness`
-- **Method**: `PUT`
-- **Body**: New brightness setting
-```json
-{
-  "brightness": 75
-}
-```
-- **Response**: Updated brightness setting
+- **方法**: `GET`
+- **响应**: 当前亮度 (0-100)
 ```json
 {
   "brightness": 75
 }
 ```
 
-## Preview Mode
+### 更新亮度
 
-### Start Preview Mode
+更新显示亮度。
 
-Starts preview mode with the specified content. Will fail if another preview session is already active.
+- **URL**: `/api/settings/brightness`
+- **方法**: `PUT`
+- **请求体**: 新的亮度设置
+```json
+{
+  "brightness": 75
+}
+```
+- **响应**: 更新后的亮度设置
+```json
+{
+  "brightness": 75
+}
+```
+
+## 预览模式
+
+### 启动预览模式
+
+使用指定内容启动预览模式。如果另一个预览会话已经处于活动状态，则会失败。
 
 - **URL**: `/api/preview`
-- **Method**: `POST`
-- **Body**: Playlist item to preview (no session ID needed)
+- **方法**: `POST`
+- **请求体**: 要预览的播放列表项（不需要会话 ID）
 ```json
 {
   "id": "preview-item",
@@ -312,7 +312,7 @@ Starts preview mode with the specified content. Will fail if another preview ses
   }
 }
 ```
-- **Response**: Preview mode response with server-generated session ID
+- **响应**: 包含服务器生成会话 ID 的预览模式响应
 ```json
 {
   "item": {
@@ -334,18 +334,18 @@ Starts preview mode with the specified content. Will fail if another preview ses
   "session_id": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
-- **Error Codes**:
-  - `403` - Another preview session is already active
+- **错误代码**:
+  - `403` - 另一个预览会话已经处于活动状态
 
-**Note**: The session ID returned must be saved and used for all subsequent preview operations (update, ping, exit). 
+**注意**: 返回的会话 ID 必须保存并用于所有后续的预览操作（更新、心跳检测、退出）。 
 
-### Update Preview Content
+### 更新预览内容
 
-Updates the content being previewed.
+更新正在预览的内容。
 
 - **URL**: `/api/preview`
-- **Method**: `PUT`
-- **Body**: Updated item and session ID
+- **方法**: `PUT`
+- **请求体**: 更新后的项目和会话 ID
 ```json
 {
   "item": {
@@ -367,91 +367,91 @@ Updates the content being previewed.
   "session_id": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
-- **Response**: Updated preview response
-- **Error Codes**:
-  - `403` - Session does not own the preview lock
-  - `404` - Not in preview mode
+- **响应**: 更新后的预览响应
+- **错误代码**:
+  - `403` - 会话不拥有预览锁
+  - `404` - 未处于预览模式
 
-### Exit Preview Mode
+### 退出预览模式
 
-Exits preview mode.
+退出预览模式。
 
 - **URL**: `/api/preview`
-- **Method**: `DELETE`
-- **Body**: Session ID for authorization
+- **方法**: `DELETE`
+- **请求体**: 用于授权的会话 ID
 ```json
 {
   "session_id": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
-- **Response**: Status code only
-- **Error Codes**:
-  - `403` - Session does not own the preview lock
-  - `404` - Not in preview mode
+- **响应**: 仅状态码
+- **错误代码**:
+  - `403` - 会话不拥有预览锁
+  - `404` - 未处于预览模式
 
-**Note**: Only the session that started preview mode can exit it.
+**注意**: 只有启动预览模式的会话才能退出它。
 
-### Check Preview Status
+### 检查预览状态
 
-Checks if the display is currently in preview mode.
+检查显示屏当前是否处于预览模式。
 
 - **URL**: `/api/preview/status`
-- **Method**: `GET`
-- **Response**: Preview mode state
+- **方法**: `GET`
+- **响应**: 预览模式状态
 ```json
 {
   "active": true
 }
 ```
 
-### Ping Preview Session
+### 心跳检测预览会话
 
-Prevents the preview mode from timing out. Only the session that started the preview can ping it.
+防止预览模式超时。只有启动预览的会话才能对其进行心跳检测。
 
 - **URL**: `/api/preview/ping`
-- **Method**: `POST`
-- **Body**: Session ID for authorization
+- **方法**: `POST`
+- **请求体**: 用于授权的会话 ID
 ```json
 {
   "session_id": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
-- **Response**: Status code only
-- **Error Codes**:
-  - `403` - Session does not own the preview lock
-  - `404` - Not in preview mode 
+- **响应**: 仅状态码
+- **错误代码**:
+  - `403` - 会话不拥有预览锁
+  - `404` - 未处于预览模式 
 
-### Check Session Ownership
+### 检查会话所有权
 
-Checks if a session owns the current preview lock.
+检查会话是否拥有当前的预览锁。
 
 - **URL**: `/api/preview/session`
-- **Method**: `POST`
-- **Body**: Session ID to check
+- **方法**: `POST`
+- **请求体**: 要检查的会话 ID
 ```json
 {
   "session_id": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
-- **Response**: Ownership status
+- **响应**: 所有权状态
 ```json
 {
   "is_owner": true
 }
 ```
 
-## Image Library
+## 图片库
 
-Upload an image once and reference it across multiple playlist items via the returned `image_id`.
+上传一次图片，然后通过返回的 `image_id` 在多个播放列表项中引用它。
 
-### Upload Image
+### 上传图片
 
-Accepts multipart uploads, validates the payload, converts everything to PNG, and stores the bytes under `/var/lib/led-matrix-controller/images`.
+接受多部分上传，验证载荷，将所有内容转换为 PNG，并将字节存储在 `/var/lib/led-matrix-controller/images` 下。
 
 - **URL**: `/api/images`
-- **Method**: `POST`
-- **Body**: `multipart/form-data` with a single `file` field (PNG/JPEG/GIF, max 30 MB)
-- **Response**:
+- **方法**: `POST`
+- **请求体**: 带有单个 `file` 字段的 `multipart/form-data`（PNG/JPEG/GIF，最大 30 MB）
+- **响应**:
 ```json
 {
   "image_id": "c3c8d980-27a7-4a7a-9f56-1f4b1f8bb0fc",
@@ -461,58 +461,58 @@ Accepts multipart uploads, validates the payload, converts everything to PNG, an
   "thumbnail_height": 48
 }
 ```
-- **Error Codes**:
-  - `400` - Invalid multipart payload or empty file
-  - `413` - File exceeds 30 MB
-  - `415` - Unsupported image format/decoder failure
-  - `500` - Failed to persist the PNG
+- **错误代码**:
+  - `400` - 无效的多部分载荷或空文件
+  - `413` - 文件超过 30 MB
+  - `415` - 不支持的图片格式/解码器失败
+  - `500` - 无法持久化 PNG
 
-### Fetch Image
+### 获取图片
 
-Returns the stored PNG bytes for previews or diagnostics.
+返回存储的 PNG 字节用于预览或诊断。
 
 - **URL**: `/api/images/:id`
-- **Method**: `GET`
-- **Response**: Raw `image/png` body (use as-is in `<img>` tags or `<canvas>`)
-- **Error Codes**:
-  - `404` - No image exists for that `image_id`
+- **方法**: `GET`
+- **响应**: 原始 `image/png` 主体（直接在 `<img>` 标签或 `<canvas>` 中使用）
+- **错误代码**:
+  - `404` - 该 `image_id` 不存在图片
 
-### Fetch Image Thumbnail
+### 获取图片缩略图
 
-Returns a pre-generated thumbnail (PNG) for lightweight previews such as playlist cards. Thumbnails are generated automatically during upload and lazily regenerated on demand if missing.
+返回预生成的缩略图（PNG），用于轻量级预览，例如播放列表卡片。缩略图在上传期间自动生成，如果缺失则按需延迟重新生成。
 
 - **URL**: `/api/images/:id/thumbnail`
-- **Method**: `GET`
-- **Response**: Raw `image/png` thumbnail (fits within 128×96 while preserving aspect ratio)
-- **Error Codes**:
-  - `404` - No image exists for that `image_id`
+- **方法**: `GET`
+- **响应**: 原始 `image/png` 缩略图（适应 128×96 以内并保持纵横比）
+- **错误代码**:
+  - `404` - 该 `image_id` 不存在图片
 
-## Real-time Events
+## 实时事件
 
-The application provides Server-Sent Events (SSE) for real-time updates.
+应用程序提供服务器发送事件 (SSE) 以实现实时更新。
 
-### Brightness Events
+### 亮度事件
 
-Subscribe to brightness change events.
+订阅亮度更改事件。
 
 - **URL**: `/api/events/brightness`
-- **Method**: `GET`
-- **Content Type**: `text/event-stream`
-- **Event Format**:
+- **方法**: `GET`
+- **内容类型**: `text/event-stream`
+- **事件格式**:
 ```json
 {
   "brightness": 75
 }
 ```
 
-### Editor Lock Events
+### 编辑器锁定事件
 
-Subscribe to editor lock status changes.
+订阅编辑器锁定状态更改。
 
 - **URL**: `/api/events/editor`
-- **Method**: `GET`
-- **Content Type**: `text/event-stream`
-- **Event Format**:
+- **方法**: `GET`
+- **内容类型**: `text/event-stream`
+- **事件格式**:
 ```json
 {
   "locked": true,
@@ -520,14 +520,14 @@ Subscribe to editor lock status changes.
 }
 ```
 
-### Playlist Events
+### 播放列表事件
 
-Subscribe to playlist update events.
+订阅播放列表更新事件。
 
 - **URL**: `/api/events/playlist`
-- **Method**: `GET`
-- **Content Type**: `text/event-stream`
-- **Event Format**:
+- **方法**: `GET`
+- **内容类型**: `text/event-stream`
+- **事件格式**:
 ```json
 {
   "items": [/* array of playlist items */],
