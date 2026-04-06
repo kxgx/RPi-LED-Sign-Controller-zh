@@ -245,12 +245,17 @@ impl TextRenderer {
         let mut caret = x_start;
         for c in self.content.text.chars() {
             let glyph_id = font.glyph_id(c);
-            if let Some(glyph) = scaled_font.outline_glyph(glyph_id) {
-                let bb = glyph.px_bounds();
-                let draw_x = caret + bb.min.x;
-                let draw_y = y_pos + bb.min.y;
+            let glyph = ab_glyph::Glyph {
+                id: glyph_id,
+                scale: ab_glyph::PxScale { x: 20.0, y: 20.0 },
+                position: ab_glyph::point(caret, y_pos),
+            };
+            if let Some(outlined) = scaled_font.outline_glyph(glyph.clone()) {
+                let bb = outlined.px_bounds();
+                let draw_x = bb.min.x;
+                let draw_y = bb.min.y;
 
-                glyph.draw(|x, y, v| {
+                outlined.draw(|x, y, v| {
                     if v > 0.0 {
                         let px = (draw_x + x as f32) as i32;
                         let py = (draw_y + y as f32) as i32;
@@ -260,7 +265,7 @@ impl TextRenderer {
                         }
                     }
                 });
-                caret += glyph.advance();
+                caret += glyph.h_advance_scaled(&scaled_font);
             }
         }
     }
