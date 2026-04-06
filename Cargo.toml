@@ -2,7 +2,7 @@
 name = "rpi_led_sign_controller"
 description= "Controlls a led matrix display with various features and a web config interface."
 authors = ["Paul-Vincent Roll"]
-repository = "https://github.com/kxgx/RPi-LED-Sign-Controller-zh"
+repository = "https://github.com/paviro/rpi-led-sign-controller"
 version = "0.3.0"
 edition = "2021"
 
@@ -23,7 +23,6 @@ once_cell = "1.17.1"
 dirs = "4.0.0"
 rand = "0.8.5"
 log = "0.4.17"
-ab_glyph = "0.2"
 env_logger = "0.10.0"
 chrono = "0.4.24"
 argh = "0.1.3"

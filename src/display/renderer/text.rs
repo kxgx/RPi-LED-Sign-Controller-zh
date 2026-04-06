@@ -1,20 +1,18 @@
 use crate::display::driver::LedCanvas;
+use crate::display::graphics::embedded_graphics_support::EmbeddedGraphicsCanvas;
 use crate::display::renderer::{RenderContext, Renderer};
 use crate::models::content::ContentDetails;
 use crate::models::playlist::PlayListItem;
-use crate::models::text::TextContent;
-use ab_glyph::{Font, FontArc, ScaleFont};
+use crate::models::text::{TextContent, TextSegment};
+use embedded_graphics::geometry::Point;
+use embedded_graphics::mono_font::iso_8859_1::FONT_10X20 as FONT_10X20_LATIN1;
+use embedded_graphics::mono_font::MonoTextStyle;
+use embedded_graphics::pixelcolor::Rgb888;
+use embedded_graphics::text::Text;
+use embedded_graphics::Drawable;
 use log::debug;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::Instant;
-
-// 默认字体路径 (文泉驿微米黑，常见于 Linux/树莓派)
-const DEFAULT_FONT_PATH: &str = "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc";
-// 备选字体路径
-const FALLBACK_FONT_PATHS: &[&str] = &[
-    "/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf",
-    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
-];
 
 pub struct TextRenderer {
     /// The text content to render
@@ -23,14 +21,11 @@ pub struct TextRenderer {
     /// Context with display properties
     ctx: RenderContext,
 
-    /// Loaded font
-    font: Option<FontArc>,
-
     /// Width of the text in pixels
-    text_width: f32,
+    text_width: i32,
 
     /// Current scroll position
-    scroll_position: f32,
+    scroll_position: i32,
 
     /// Counter for completed scroll cycles
     completed_scrolls: u32,
@@ -60,17 +55,13 @@ impl Renderer for TextRenderer {
             _ => panic!("Expected text content"),
         };
 
-        // Load font
-        let font = Self::load_font();
-
         // Create text renderer with clone of ctx
         let ctx_clone = ctx.clone();
         let mut renderer = Self {
             content: text_content,
             ctx: ctx_clone,
-            font,
-            text_width: 0.0, // Will calculate on first render
-            scroll_position: ctx.display_width as f32,
+            text_width: 0, // Will calculate on first render
+            scroll_position: ctx.display_width,
             completed_scrolls: 0,
             accumulated_time: 0.0,
             repeat_count: content.repeat_count,
@@ -97,15 +88,15 @@ impl Renderer for TextRenderer {
     fn update(&mut self, dt: f32) {
         if self.content.scroll {
             self.accumulated_time += dt;
-            let pixels_to_move = (self.accumulated_time * self.content.speed) as f32;
+            let pixels_to_move = (self.accumulated_time * self.content.speed) as i32;
 
-            if pixels_to_move > 0.0 {
+            if pixels_to_move > 0 {
                 self.scroll_position -= pixels_to_move;
                 self.accumulated_time = 0.0;
 
                 // Reset position when text is off screen
                 if self.scroll_position < -self.text_width {
-                    self.scroll_position = self.ctx.display_width as f32;
+                    self.scroll_position = self.ctx.display_width;
                     self.completed_scrolls += 1;
                 }
             }
@@ -121,10 +112,25 @@ impl Renderer for TextRenderer {
     }
 
     fn render(&self, canvas: &mut Box<dyn LedCanvas>) {
-        if let Some(font) = &self.font {
-            self.render_with_font(canvas, font);
+        // Create embedded graphics wrapper
+        let mut eg_canvas = EmbeddedGraphicsCanvas::new(canvas);
+
+        // Get the vertical position for text
+        let font_height = 20; // Height of FONT_10X20_LATIN1
+        let vertical_position = self.ctx.calculate_centered_text_position(font_height);
+
+        // Apply brightness scaling to the text color
+        let [r, g, b] = self.ctx.apply_brightness(self.content.color);
+        let text_style = MonoTextStyle::new(&FONT_10X20_LATIN1, Rgb888::new(r, g, b));
+
+        if let Some(segments) = &self.content.text_segments {
+            if !segments.is_empty() {
+                self.render_segmented_text(&mut eg_canvas, segments, vertical_position);
+            } else {
+                self.render_simple_text(&mut eg_canvas, vertical_position, &text_style);
+            }
         } else {
-            debug!("No font loaded, skipping text rendering");
+            self.render_simple_text(&mut eg_canvas, vertical_position, &text_style);
         }
     }
 
@@ -146,7 +152,7 @@ impl Renderer for TextRenderer {
     }
 
     fn reset(&mut self) {
-        self.scroll_position = self.ctx.display_width as f32;
+        self.scroll_position = self.ctx.display_width;
         self.completed_scrolls = 0;
         self.accumulated_time = 0.0;
         self.start_time = Instant::now();
@@ -182,7 +188,7 @@ impl Renderer for TextRenderer {
             // if currently off-screen
             if self.content.scroll && self.scroll_position < -self.text_width {
                 // Position text just off screen to the right
-                self.scroll_position = self.ctx.display_width as f32;
+                self.scroll_position = self.ctx.display_width;
             }
         }
 
@@ -192,108 +198,208 @@ impl Renderer for TextRenderer {
 }
 
 impl TextRenderer {
-    fn load_font() -> Option<FontArc> {
-        let paths = std::iter::once(DEFAULT_FONT_PATH)
-            .chain(FALLBACK_FONT_PATHS.iter().copied());
-
-        for path in paths {
-            if let Ok(data) = std::fs::read(path) {
-                match FontArc::try_from_vec(data) {
-                    Ok(font) => {
-                        debug!("Loaded font from: {}", path);
-                        return Some(font);
-                    }
-                    Err(e) => debug!("Failed to parse font at {}: {:?}", path, e),
-                }
-            }
-        }
-        debug!("No suitable font found. Chinese characters will not render correctly.");
-        None
-    }
-
-    // Calculate text width based on character count and font metrics
+    // Calculate text width based on character count
     fn calculate_text_width(&mut self) {
-        if let Some(font) = &self.font {
-            let scaled_font = font.as_scaled(16.0); // 16px height
-            let mut total_advance = 0.0;
-            for c in self.content.text.chars() {
-                let glyph_id = font.glyph_id(c);
-                total_advance += scaled_font.h_advance(glyph_id);
-            }
-            self.text_width = total_advance;
+        self.text_width = (self.content.text.chars().count() as i32) * 10 + 2;
+    }
+
+    // Render simple (unsegmented) text
+    fn render_simple_text(
+        &self,
+        canvas: &mut EmbeddedGraphicsCanvas,
+        y_pos: i32,
+        style: &MonoTextStyle<Rgb888>,
+    ) {
+        if self.content.scroll {
+            Text::new(
+                &self.content.text,
+                Point::new(self.scroll_position, y_pos),
+                *style,
+            )
+            .draw(canvas)
+            .unwrap();
         } else {
-            // Fallback estimation if no font is loaded
-            self.text_width = (self.content.text.chars().count() as f32) * 10.0 + 2.0;
+            let x = (self.ctx.display_width - self.text_width) / 2;
+            Text::new(&self.content.text, Point::new(x, y_pos), *style)
+                .draw(canvas)
+                .unwrap();
         }
     }
 
-    fn render_with_font(&self, canvas: &mut Box<dyn LedCanvas>, font: &FontArc) {
-        let scaled_font = font.as_scaled(16.0); // 16px height for better fit
-        let [r, g, b] = self.ctx.apply_brightness(self.content.color);
-        
-        debug!("Rendering text: '{}', text_width: {}, display: {}x{}", 
-               self.content.text, self.text_width, self.ctx.display_width, self.ctx.display_height);
-        
-        // Vertical centering using the exact formula from original repository
-        // Original from context.rs: (display_height / 2) + (font_height / 2) - baseline_adjustment
-        // where baseline_adjustment = 5
-        let ascent = scaled_font.ascent();
-        let descent = scaled_font.descent();
-        let font_height = ascent - descent;
-        
-        // Use the original repository's centering formula
-        let baseline_adjustment = 5.0;
-        let y_pos = (self.ctx.display_height as f32 / 2.0) + (font_height / 2.0) - baseline_adjustment;
-        
-        debug!("y_pos: {}, ascent: {}, descent: {}, font_height: {}", y_pos, ascent, descent, font_height);
-
+    // Render segmented text with formatting
+    fn render_segmented_text(
+        &self,
+        canvas: &mut EmbeddedGraphicsCanvas,
+        segments: &[TextSegment],
+        y_pos: i32,
+    ) {
+        // Starting X position depends on scroll mode
         let x_start = if self.content.scroll {
             self.scroll_position
         } else {
-            ((self.ctx.display_width as f32) - self.text_width) / 2.0
+            (self.ctx.display_width - self.text_width) / 2
         };
-        debug!("x_start: {}", x_start);
 
-        // Render each glyph
-        let mut caret = x_start;
-        let mut pixel_count = 0;
-        for c in self.content.text.chars() {
-            let glyph_id = font.glyph_id(c);
-            let glyph = ab_glyph::Glyph {
-                id: glyph_id,
-                scale: ab_glyph::PxScale { x: 16.0, y: 16.0 },
-                position: ab_glyph::point(caret, y_pos),
-            };
-            
-            if let Some(outlined) = scaled_font.outline_glyph(glyph.clone()) {
-                // px_bounds() returns the absolute bounding box in canvas coordinates
-                // No need to add glyph.position again!
-                let bb = outlined.px_bounds();
-                debug!("Char '{}': position=({}, {}), absolute bounds=({}, {}, {}, {})",
-                       c, glyph.position.x, glyph.position.y, bb.min.x, bb.min.y, bb.max.x, bb.max.y);
-                
-                // Draw the glyph pixels using absolute coordinates directly
-                outlined.draw(|x, y, v| {
-                    if v > 0.0 {
-                        // x and y are u32 pixel coordinates in canvas space
-                        let px = x as i32;
-                        let py = y as i32;
-                        
-                        // Bounds check
-                        if px >= 0 && px < self.ctx.display_width as i32 &&
-                           py >= 0 && py < self.ctx.display_height as i32 {
-                            canvas.set_pixel(px as usize, py as usize, r, g, b);
-                            pixel_count += 1;
-                        }
-                    }
-                });
-                
-                // Move to next character
-                caret += scaled_font.h_advance(glyph.id);
-            } else {
-                debug!("Char '{}' has no outline", c);
+        // Collect formatting data to apply after text rendering
+        let mut formatting_effects = Vec::new();
+
+        // Convert the full text to a vector of characters for safe indexing
+        let chars: Vec<char> = self.content.text.chars().collect();
+
+        // First pass: render all text segments
+        for segment in segments {
+            // Apply brightness scaling to segment color
+            // Use the segment color if specified, otherwise fall back to the default text color
+            let segment_color = segment.color.unwrap_or(self.content.color);
+            let [sr, sg, sb] = self.ctx.apply_brightness(segment_color);
+
+            // Create text style for this segment
+            let font = &FONT_10X20_LATIN1;
+            let segment_style = MonoTextStyle::new(font, Rgb888::new(sr, sg, sb));
+
+            // Make sure indices are within bounds
+            let start = segment.start.min(chars.len());
+            let end = segment.end.min(chars.len());
+
+            if start < end {
+                // Get the text for this segment
+                let segment_text: String = chars[start..end].iter().collect();
+
+                // Calculate segment width and position
+                let segment_width = (end - start) as i32 * 10;
+                let x_pos = x_start + (start as i32 * 10);
+
+                // Check for bold formatting
+                let has_bold = segment.formatting.as_ref().map_or(false, |fmt| fmt.bold);
+
+                // Render the text
+                if has_bold {
+                    // Draw text twice with a 1px offset to create a bold effect
+                    Text::new(&segment_text, Point::new(x_pos + 1, y_pos), segment_style)
+                        .draw(canvas)
+                        .unwrap();
+                }
+
+                Text::new(&segment_text, Point::new(x_pos, y_pos), segment_style)
+                    .draw(canvas)
+                    .unwrap();
+
+                // Store formatting data for second pass
+                let has_underline = segment
+                    .formatting
+                    .as_ref()
+                    .map_or(false, |fmt| fmt.underline);
+                let has_strikethrough = segment
+                    .formatting
+                    .as_ref()
+                    .map_or(false, |fmt| fmt.strikethrough);
+
+                if has_underline || has_strikethrough {
+                    formatting_effects.push((
+                        x_pos,
+                        segment_width,
+                        [sr, sg, sb],
+                        has_underline,
+                        has_strikethrough,
+                    ));
+                }
             }
         }
-        debug!("Total pixels drawn: {}", pixel_count);
+
+        // Second pass: apply underline and strikethrough effects
+        for (x_pos, width, [r, g, b], is_underline, is_strikethrough) in formatting_effects {
+            self.apply_text_effects(
+                canvas,
+                x_pos,
+                width,
+                y_pos,
+                [r, g, b],
+                is_underline,
+                is_strikethrough,
+            );
+        }
+    }
+
+    // Apply underline and strikethrough effects
+    fn apply_text_effects(
+        &self,
+        eg_canvas: &mut EmbeddedGraphicsCanvas,
+        x_pos: i32,
+        width: i32,
+        y_pos: i32,
+        [r, g, b]: [u8; 3],
+        is_underline: bool,
+        is_strikethrough: bool,
+    ) {
+        if is_underline {
+            // Draw line 3px below text baseline using embedded graphics primitives
+            let underline_y = y_pos + 3;
+
+            // Get the underlying canvas from EmbeddedGraphicsCanvas
+            let canvas = eg_canvas.inner_mut();
+
+            for i in 0..width {
+                canvas.set_pixel((x_pos + i) as usize, underline_y as usize, r, g, b);
+            }
+        }
+
+        if is_strikethrough {
+            // Get contrasting color for strikethrough
+            let [strike_r, strike_g, strike_b] = self.get_strikethrough_color(r, g, b);
+
+            // Draw line through text center (font_height = 20)
+            let strike_y1 = y_pos - 5;
+            let strike_y2 = strike_y1 - 1; // Second line one pixel above
+
+            // Get the underlying canvas
+            let canvas = eg_canvas.inner_mut();
+
+            for i in 0..width {
+                // Draw two pixels in height for better visibility
+                canvas.set_pixel(
+                    (x_pos + i) as usize,
+                    strike_y1 as usize,
+                    strike_r,
+                    strike_g,
+                    strike_b,
+                );
+                canvas.set_pixel(
+                    (x_pos + i) as usize,
+                    strike_y2 as usize,
+                    strike_r,
+                    strike_g,
+                    strike_b,
+                );
+            }
+        }
+    }
+
+    // Helper to get appropriate strikethrough color
+    fn get_strikethrough_color(&self, r: u8, g: u8, b: u8) -> [u8; 3] {
+        // Check if we're in grayscale mode (R≈G≈B)
+        let is_grayscale = (r as i16 - g as i16).abs() < 20
+            && (g as i16 - b as i16).abs() < 20
+            && (r as i16 - b as i16).abs() < 20;
+
+        // For grayscale colors, use red
+        if is_grayscale {
+            return self.ctx.apply_brightness([255, 0, 0]);
+        }
+
+        // For red family colors
+        let g_equals_b = (g as i16 - b as i16).abs() < 20;
+        if g_equals_b && r > g + 30 {
+            let red_ratio = r as f32 / (r as f32 + g as f32 + b as f32);
+            let blend_factor = ((red_ratio - 0.4) * 2.5).min(1.0).max(0.0);
+
+            let strike_r = 255;
+            let strike_g = (blend_factor * 255.0) as u8;
+            let strike_b = (blend_factor * 255.0) as u8;
+
+            return self.ctx.apply_brightness([strike_r, strike_g, strike_b]);
+        }
+
+        // Default to white for all other colors
+        self.ctx.apply_brightness([255, 255, 255])
     }
 }
