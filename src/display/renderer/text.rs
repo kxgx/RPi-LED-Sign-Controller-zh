@@ -235,11 +235,16 @@ impl TextRenderer {
                self.content.text, self.text_width, self.ctx.display_width, self.ctx.display_height);
         
         // Vertical centering: calculate baseline position
+        // font_height is the total height from top to bottom
+        // We want to center the font so that its visual center aligns with screen center
         let ascent = scaled_font.ascent();
         let descent = scaled_font.descent();
         let font_height = ascent - descent;
-        // Position baseline so that the font's total height is centered
-        let y_pos = ((self.ctx.display_height as f32) / 2.0) + (font_height / 2.0) - descent;
+        
+        // Position baseline: screen_center + (font_height/2) - ascent
+        // This places the font's visual center at screen center
+        let y_pos = (self.ctx.display_height as f32 / 2.0) - (ascent - font_height / 2.0);
+        
         debug!("y_pos: {}, ascent: {}, descent: {}, font_height: {}", y_pos, ascent, descent, font_height);
 
         let x_start = if self.content.scroll {
