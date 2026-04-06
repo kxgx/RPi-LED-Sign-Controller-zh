@@ -490,7 +490,7 @@ if [ $FRONTEND_REPO_EXISTS -eq 0 ]; then
     
     echo -e "${YELLOW}Cloning frontend repository as user $ACTUAL_USER...${NC}"
     # Clone the repository as the regular user
-    sudo -u $ACTUAL_USER git clone https://github.com/paviro/RPi-LED-Sign-Controller-Frontend.git "$FRONTEND_REPO_DIR"
+    sudo -u $ACTUAL_USER git clone https://github.com/kxgx/RPi-LED-Sign-Controller-Frontend-zh.git "$FRONTEND_REPO_DIR"
     echo -e "${GREEN}Frontend repository cloned successfully.${NC}"
     FRONTEND_JUST_CLONED=1
 fi
