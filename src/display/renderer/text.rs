@@ -270,9 +270,9 @@ impl TextRenderer {
                 // Draw the glyph pixels using absolute coordinates directly
                 outlined.draw(|x, y, v| {
                     if v > 0.0 {
-                        // x and y are already in canvas coordinates
-                        let px = x.round() as i32;
-                        let py = y.round() as i32;
+                        // x and y are u32 pixel coordinates in canvas space
+                        let px = x as i32;
+                        let py = y as i32;
                         
                         // Bounds check
                         if px >= 0 && px < self.ctx.display_width as i32 &&
