@@ -2,8 +2,8 @@ use crate::display::driver::LedCanvas;
 use crate::display::renderer::{RenderContext, Renderer};
 use crate::models::content::ContentDetails;
 use crate::models::playlist::PlayListItem;
-use crate::models::text::{TextContent, TextSegment};
-use ab_glyph::{Font, FontRef, ScaleFont};
+use crate::models::text::TextContent;
+use ab_glyph::{Font, FontArc, ScaleFont};
 use log::debug;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::Instant;
@@ -24,8 +24,7 @@ pub struct TextRenderer {
     ctx: RenderContext,
 
     /// Loaded font
-    font: Option<FontRef<'static>>,
-    font_data: Vec<u8>, // Store data to keep the font alive
+    font: Option<FontArc>,
 
     /// Width of the text in pixels
     text_width: f32,
@@ -62,14 +61,13 @@ impl Renderer for TextRenderer {
         };
 
         // Load font
-        let (font_data, font) = Self::load_font();
+        let font = Self::load_font();
 
         // Create text renderer with clone of ctx
         let ctx_clone = ctx.clone();
         let mut renderer = Self {
             content: text_content,
             ctx: ctx_clone,
-            font_data,
             font,
             text_width: 0.0, // Will calculate on first render
             scroll_position: ctx.display_width as f32,
@@ -194,37 +192,42 @@ impl Renderer for TextRenderer {
 }
 
 impl TextRenderer {
-    fn load_font() -> (Vec<u8>, Option<FontRef<'static>>) {
+    fn load_font() -> Option<FontArc> {
         let paths = std::iter::once(DEFAULT_FONT_PATH)
             .chain(FALLBACK_FONT_PATHS.iter().copied());
 
         for path in paths {
             if let Ok(data) = std::fs::read(path) {
-                match FontRef::try_from_slice(&data) {
+                match FontArc::try_from_vec(data) {
                     Ok(font) => {
                         debug!("Loaded font from: {}", path);
-                        return (data, Some(font));
+                        return Some(font);
                     }
                     Err(e) => debug!("Failed to parse font at {}: {:?}", path, e),
                 }
             }
         }
         debug!("No suitable font found. Chinese characters will not render correctly.");
-        (Vec::new(), None)
+        None
     }
 
     // Calculate text width based on character count and font metrics
     fn calculate_text_width(&mut self) {
         if let Some(font) = &self.font {
             let scaled_font = font.as_scaled(20.0); // 20px height
-            self.text_width = scaled_font.horizontal_advance(&self.content.text);
+            let mut total_advance = 0.0;
+            for c in self.content.text.chars() {
+                let glyph_id = font.glyph_id(c);
+                total_advance += scaled_font.h_advance(glyph_id);
+            }
+            self.text_width = total_advance;
         } else {
             // Fallback estimation if no font is loaded
             self.text_width = (self.content.text.chars().count() as f32) * 10.0 + 2.0;
         }
     }
 
-    fn render_with_font(&self, canvas: &mut Box<dyn LedCanvas>, font: &FontRef) {
+    fn render_with_font(&self, canvas: &mut Box<dyn LedCanvas>, font: &FontArc) {
         let scaled_font = font.as_scaled(20.0); // 20px height
         let [r, g, b] = self.ctx.apply_brightness(self.content.color);
         
@@ -241,7 +244,8 @@ impl TextRenderer {
         // Render each glyph
         let mut caret = x_start;
         for c in self.content.text.chars() {
-            if let Some(glyph) = scaled_font.outlined_glyph(c) {
+            let glyph_id = font.glyph_id(c);
+            if let Some(glyph) = scaled_font.outline_glyph(glyph_id) {
                 let bb = glyph.px_bounds();
                 let draw_x = caret + bb.min.x;
                 let draw_y = y_pos + bb.min.y;
