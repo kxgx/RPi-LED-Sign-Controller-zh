@@ -265,7 +265,7 @@ impl TextRenderer {
                         }
                     }
                 });
-                caret += glyph.h_advance_scaled(&scaled_font);
+                caret += scaled_font.h_advance(glyph.id);
             }
         }
     }
