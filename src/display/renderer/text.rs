@@ -261,18 +261,18 @@ impl TextRenderer {
             };
             
             if let Some(outlined) = scaled_font.outline_glyph(glyph.clone()) {
-                // Get the bounding box in local glyph coordinates
+                // px_bounds() returns the absolute bounding box in canvas coordinates
+                // No need to add glyph.position again!
                 let bb = outlined.px_bounds();
-                debug!("Char '{}': position=({}, {}), bounds=({}, {}, {}, {})",
+                debug!("Char '{}': position=({}, {}), absolute bounds=({}, {}, {}, {})",
                        c, glyph.position.x, glyph.position.y, bb.min.x, bb.min.y, bb.max.x, bb.max.y);
                 
-                // Draw the glyph pixels
+                // Draw the glyph pixels using absolute coordinates directly
                 outlined.draw(|x, y, v| {
                     if v > 0.0 {
-                        // Convert local glyph coordinates to canvas coordinates
-                        // by adding the glyph's position offset
-                        let px = (glyph.position.x + bb.min.x + x as f32).round() as i32;
-                        let py = (glyph.position.y + bb.min.y + y as f32).round() as i32;
+                        // x and y are already in canvas coordinates
+                        let px = x.round() as i32;
+                        let py = y.round() as i32;
                         
                         // Bounds check
                         if px >= 0 && px < self.ctx.display_width as i32 &&
