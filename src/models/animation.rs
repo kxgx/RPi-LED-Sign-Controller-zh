@@ -147,7 +147,7 @@ impl AnimationContent {
     pub fn validate(&self) -> Result<(), String> {
         let palette_len = self.palette().len();
         if self.requires_palette() && palette_len == 0 {
-            return Err("Animation presets require at least one color".to_string());
+            return Err("动画预设至少需要一种颜色".to_string());
         }
 
         match self {
@@ -155,12 +155,12 @@ impl AnimationContent {
             | AnimationContent::PaletteWave { cycle_ms, .. }
             | AnimationContent::DualPulse { cycle_ms, .. } => {
                 if *cycle_ms == 0 {
-                    return Err("cycle_ms must be greater than zero".to_string());
+                    return Err("cycle_ms 必须大于零".to_string());
                 }
             }
             AnimationContent::ColorFade { drift_speed, .. } => {
                 if !drift_speed.is_finite() || *drift_speed <= 0.0 {
-                    return Err("drift_speed must be a positive finite value".to_string());
+                    return Err("drift_speed 必须是正有限值".to_string());
                 }
             }
             AnimationContent::Strobe {
@@ -170,16 +170,16 @@ impl AnimationContent {
                 ..
             } => {
                 if *flash_ms == 0 {
-                    return Err("flash_ms must be greater than zero".to_string());
+                    return Err("flash_ms 必须大于零".to_string());
                 }
                 if *fade_ms == 0 {
-                    return Err("fade_ms must be greater than zero".to_string());
+                    return Err("fade_ms 必须大于零".to_string());
                 }
                 if !randomization_factor.is_finite()
                     || *randomization_factor < 0.0
                     || *randomization_factor > 1.0
                 {
-                    return Err("randomization_factor must be between 0.0 and 1.0".to_string());
+                    return Err("randomization_factor 必须在 0.0 到 1.0 之间".to_string());
                 }
             }
             AnimationContent::Sparkle {
@@ -188,10 +188,10 @@ impl AnimationContent {
                 ..
             } => {
                 if !density.is_finite() || *density <= 0.0 || *density > 1.0 {
-                    return Err("density must be in the range (0, 1]".to_string());
+                    return Err("density 必须在 (0, 1] 范围内".to_string());
                 }
                 if *twinkle_ms == 0 {
-                    return Err("twinkle_ms must be greater than zero".to_string());
+                    return Err("twinkle_ms 必须大于零".to_string());
                 }
             }
             AnimationContent::MosaicTwinkle {
@@ -201,13 +201,13 @@ impl AnimationContent {
                 ..
             } => {
                 if *tile_size == 0 {
-                    return Err("tile_size must be at least 1".to_string());
+                    return Err("tile_size 必须至少为 1".to_string());
                 }
                 if !flow_speed.is_finite() || *flow_speed <= 0.0 {
-                    return Err("flow_speed must be a positive finite value".to_string());
+                    return Err("flow_speed 必须是正有限值".to_string());
                 }
                 if *border_size > *tile_size {
-                    return Err("border_size must be less than or equal to tile_size".to_string());
+                    return Err("border_size 必须小于或等于 tile_size".to_string());
                 }
             }
             AnimationContent::Plasma {
@@ -216,10 +216,10 @@ impl AnimationContent {
                 ..
             } => {
                 if !flow_speed.is_finite() || *flow_speed <= 0.0 {
-                    return Err("flow_speed must be a positive finite value".to_string());
+                    return Err("flow_speed 必须是正有限值".to_string());
                 }
                 if !noise_scale.is_finite() || *noise_scale <= 0.0 {
-                    return Err("noise_scale must be a positive finite value".to_string());
+                    return Err("noise_scale 必须是正有限值".to_string());
                 }
             }
         }
@@ -227,12 +227,12 @@ impl AnimationContent {
         match self {
             AnimationContent::PaletteWave { wave_count, .. } => {
                 if *wave_count == 0 {
-                    return Err("wave_count must be at least 1".to_string());
+                    return Err("wave_count 必须至少为 1".to_string());
                 }
             }
             AnimationContent::DualPulse { phase_offset, .. } => {
                 if !phase_offset.is_finite() {
-                    return Err("phase_offset must be finite".to_string());
+                    return Err("phase_offset 必须是有限值".to_string());
                 }
             }
             _ => {}

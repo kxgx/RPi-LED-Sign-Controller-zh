@@ -12,7 +12,7 @@ use log::{debug, error, warn};
 pub async fn get_playlist_items(
     State(combined_state): State<CombinedState>,
 ) -> Json<Vec<PlayListItem>> {
-    debug!("Getting all playlist items");
+    debug!("正在获取所有播放列表项目");
     let ((display, _), _) = combined_state;
     let display = display.lock().await;
     Json(display.playlist.items.clone())
@@ -23,7 +23,7 @@ pub async fn create_playlist_item(
     State(combined_state): State<CombinedState>,
     Json(item): Json<PlayListItem>,
 ) -> (StatusCode, Json<PlayListItem>) {
-    debug!("Creating new playlist item");
+    debug!("正在创建新的播放列表项目");
 
     // No need to check for empty ID - deserialization already handled it
     let ((display, storage), event_state) = combined_state;
@@ -33,7 +33,7 @@ pub async fn create_playlist_item(
     if let Some(image_id) = extract_image_id(&item) {
         if !storage_guard.image_path(image_id).exists() {
             warn!(
-                "Rejected playlist item referencing missing image {}",
+                "拒绝了引用缺失图片 {} 的播放列表项目",
                 image_id
             );
             return (StatusCode::BAD_REQUEST, Json(item));
@@ -46,7 +46,7 @@ pub async fn create_playlist_item(
     if storage_guard.save_playlist(&display_guard.playlist) {
         storage_guard.cleanup_unused_images(&display_guard.playlist);
     } else {
-        error!("Failed to save playlist after adding new item");
+        error!("添加新项目后保存播放列表失败");
     }
     drop(storage_guard);
 
@@ -63,7 +63,7 @@ pub async fn get_playlist_item(
     State(combined_state): State<CombinedState>,
     Path(id): Path<String>,
 ) -> Result<Json<PlayListItem>, StatusCode> {
-    debug!("Getting playlist item with ID: {}", id);
+    debug!("正在获取 ID 为 {} 的播放列表项目", id);
 
     let ((display, _), _) = combined_state;
     let display_guard = display.lock().await;
@@ -87,7 +87,7 @@ pub async fn update_playlist_item(
     Path(id): Path<String>,
     Json(updated_item): Json<PlayListItem>,
 ) -> Result<Json<PlayListItem>, StatusCode> {
-    debug!("Updating playlist item with ID: {}", id);
+    debug!("正在更新 ID 为 {} 的播放列表项目", id);
 
     let ((display, storage), event_state) = combined_state;
     let mut display_guard = display.lock().await;
@@ -102,7 +102,7 @@ pub async fn update_playlist_item(
         if let Some(new_image_id) = extract_image_id(&updated_item) {
             if !storage_guard.image_path(new_image_id).exists() {
                 warn!(
-                    "Rejected playlist update referencing missing image {}",
+                    "拒绝了引用缺失图片 {} 的播放列表更新",
                     new_image_id
                 );
                 return Err(StatusCode::BAD_REQUEST);
@@ -118,7 +118,7 @@ pub async fn update_playlist_item(
         if storage_guard.save_playlist(&display_guard.playlist) {
             storage_guard.cleanup_unused_images(&display_guard.playlist);
         } else {
-            error!("Failed to save playlist after updating item");
+            error!("更新项目后保存播放列表失败");
         }
         drop(storage_guard);
 
@@ -145,7 +145,7 @@ pub async fn delete_playlist_item(
     State(combined_state): State<CombinedState>,
     Path(id): Path<String>,
 ) -> Result<StatusCode, StatusCode> {
-    debug!("Deleting playlist item with ID: {}", id);
+    debug!("正在删除 ID 为 {} 的播放列表项目", id);
 
     let ((display, storage), event_state) = combined_state;
     let mut display_guard = display.lock().await;
@@ -175,7 +175,7 @@ pub async fn delete_playlist_item(
         if storage_guard.save_playlist(&display_guard.playlist) {
             storage_guard.cleanup_unused_images(&display_guard.playlist);
         } else {
-            error!("Failed to save playlist after deleting item");
+            error!("删除项目后保存播放列表失败");
         }
         drop(storage_guard);
 
@@ -200,7 +200,7 @@ pub async fn reorder_playlist_items(
     State(combined_state): State<CombinedState>,
     Json(reorder_request): Json<ReorderRequest>,
 ) -> Result<Json<Vec<PlayListItem>>, StatusCode> {
-    debug!("Reordering playlist items");
+    debug!("正在重新排序播放列表项目");
 
     let ((display, storage), event_state) = combined_state;
     let mut display_guard = display.lock().await;
@@ -213,7 +213,7 @@ pub async fn reorder_playlist_items(
             .iter()
             .any(|item| &item.id == id)
         {
-            warn!("Reorder request contains unknown item ID: {}", id);
+            warn!("重新排序请求包含未知的项目 ID: {}", id);
             return Err(StatusCode::BAD_REQUEST);
         }
     }
@@ -221,7 +221,7 @@ pub async fn reorder_playlist_items(
     // Check if the request contains all items
     if reorder_request.item_ids.len() != display_guard.playlist.items.len() {
         warn!(
-            "Reorder request doesn't match existing items count: {} vs {}",
+            "重新排序请求与现有项目数量不匹配: {} vs {}",
             reorder_request.item_ids.len(),
             display_guard.playlist.items.len()
         );
@@ -254,7 +254,7 @@ pub async fn reorder_playlist_items(
     if storage_guard.save_playlist(&display_guard.playlist) {
         storage_guard.cleanup_unused_images(&display_guard.playlist);
     } else {
-        error!("Failed to save playlist after reordering items");
+        error!("重新排序项目后保存播放列表失败");
     }
     drop(storage_guard);
 

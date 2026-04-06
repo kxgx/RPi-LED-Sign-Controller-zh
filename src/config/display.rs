@@ -46,15 +46,15 @@ impl DisplayConfig {
 
         let driver_type = match &driver_arg {
             Some(driver) if driver == "binding" => {
-                info!("Selected driver: C++ binding for rpi-rgb-led-matrix (@https://github.com/hzeller/rpi-rgb-led-matrix)");
+                info!("已选择驱动: C++ 绑定驱动 rpi-rgb-led-matrix (@https://github.com/hzeller/rpi-rgb-led-matrix)");
                 DriverType::RpiLedMatrix
             }
             Some(driver) if driver == "native" => {
-                info!("Selected driver: Native library rpi_led_panel (@https://github.com/EmbersArc/rpi_led_panel)");
+                info!("已选择驱动: 原生 Rust 库 rpi_led_panel (@https://github.com/EmbersArc/rpi_led_panel)");
                 DriverType::RpiLedPanel
             }
             None => {
-                println!("ERROR: You must specify a driver type (--driver native|binding or LED_DRIVER=native|binding)");
+                println!("错误: 您必须指定驱动类型 (--driver native|binding 或 LED_DRIVER=native|binding)");
                 println!(
                     "\nFor help, run: {} --help",
                     std::env::args()
@@ -65,7 +65,7 @@ impl DisplayConfig {
             }
             _ => {
                 println!(
-                    "ERROR: Invalid driver type: {:?}. Must be 'native' or 'binding'",
+                    "错误: 无效的驱动类型: {:?}。必须是 'native' 或 'binding'",
                     driver_arg
                 );
                 println!(
@@ -191,50 +191,50 @@ impl DisplayConfig {
         let mut errors = Vec::new();
 
         if self.rows == 0 {
-            errors.push("Rows must be greater than 0".to_string());
+            errors.push("行数必须大于 0".to_string());
         }
 
         if self.cols == 0 {
-            errors.push("Columns must be greater than 0".to_string());
+            errors.push("列数必须大于 0".to_string());
         }
 
         if self.chain_length == 0 {
-            errors.push("Chain length must be greater than 0".to_string());
+            errors.push("链长度必须大于 0".to_string());
         }
 
         if self.parallel == 0 {
-            errors.push("Parallel chains must be greater than 0".to_string());
+            errors.push("并行链数必须大于 0".to_string());
         }
 
         if self.parallel > 3 {
             errors.push(
-                "Parallel chains must be between 1 and 3 (limitation of both drivers)".to_string(),
+                "并行链数必须在 1 到 3 之间（两种驱动的限制）".to_string(),
             );
         }
 
         if self.pwm_bits < 1 || self.pwm_bits > 11 {
-            errors.push("PWM bits must be between 1 and 11".to_string());
+            errors.push("PWM 位数必须在 1 到 11 之间".to_string());
         }
 
         if self.user_brightness > 100 {
-            errors.push("User brightness must be between 0 and 100".to_string());
+            errors.push("用户亮度必须在 0 到 100 之间".to_string());
         }
 
         if let Some(slowdown) = self.gpio_slowdown {
             if slowdown > 4 {
-                errors.push("GPIO slowdown must be between 0 and 4".to_string());
+                errors.push("GPIO 减速因子必须在 0 到 4 之间".to_string());
             }
         }
 
         if let Err(e) = self.interface.parse::<std::net::IpAddr>() {
             errors.push(format!(
-                "Invalid network interface address '{}': {}. Use a valid IP address or 'localhost'",
+                "无效的网络接口地址 '{}': {}。请使用有效的 IP 地址或 'localhost'",
                 self.interface, e
             ));
         }
 
         if self.limit_max_brightness > 100 {
-            errors.push("Maximum brightness limit must be between 0 and 100".to_string());
+            errors.push("最大亮度限制必须在 0 到 100 之间".to_string());
         }
 
         if errors.is_empty() {

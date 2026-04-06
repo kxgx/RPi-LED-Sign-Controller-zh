@@ -54,12 +54,12 @@ impl<'de> Deserialize<'de> for PlayListItem {
         match (helper.duration, helper.repeat_count) {
             (Some(_), Some(_)) => {
                 return Err(serde::de::Error::custom(
-                    "Both 'duration' and 'repeat_count' cannot be provided together",
+                    "不能同时提供 'duration' 和 'repeat_count'",
                 ));
             }
             (None, None) => {
                 return Err(serde::de::Error::custom(
-                    "Either 'duration' or 'repeat_count' must be provided",
+                    "必须提供 'duration' 或 'repeat_count' 中的一个",
                 ));
             }
             _ => {} // Exactly one is provided, which is valid
@@ -70,65 +70,65 @@ impl<'de> Deserialize<'de> for PlayListItem {
             ContentDetails::Text(text_content) => {
                 if !text_content.scroll && helper.repeat_count.is_some() {
                     return Err(serde::de::Error::custom(
-                        "When 'scroll' is false, 'duration' must be used instead of 'repeat_count'",
+                        "当 'scroll' 为 false 时，必须使用 'duration' 而不是 'repeat_count'",
                     ));
                 }
                 if text_content.scroll && helper.duration.is_some() {
                     return Err(serde::de::Error::custom(
-                        "When 'scroll' is true, 'repeat_count' must be used instead of 'duration'",
+                        "当 'scroll' 为 true 时，必须使用 'repeat_count' 而不是 'duration'",
                     ));
                 }
             }
             ContentDetails::Image(image_content) => {
                 if image_content.image_id.trim().is_empty() {
                     return Err(serde::de::Error::custom(
-                        "Image content requires a valid 'image_id'",
+                        "图片内容需要有效的 'image_id'",
                     ));
                 }
                 if image_content.natural_width == 0 || image_content.natural_height == 0 {
                     return Err(serde::de::Error::custom(
-                        "Image content requires non-zero natural dimensions",
+                        "图片内容需要非零的自然尺寸",
                     ));
                 }
 
                 if let Some(animation) = &image_content.animation {
                     if animation.keyframes.len() < 2 {
                         return Err(serde::de::Error::custom(
-                            "Animated images require at least two keyframes",
+                            "动画图片至少需要两个关键帧",
                         ));
                     }
                     if helper.duration.is_some() {
                         return Err(serde::de::Error::custom(
-                            "Animated images must use 'repeat_count' instead of 'duration'",
+                            "动画图片必须使用 'repeat_count' 而不是 'duration'",
                         ));
                     }
                 } else if helper.duration.is_none() {
                     return Err(serde::de::Error::custom(
-                        "Static images require 'duration' instead of 'repeat_count'",
+                        "静态图片需要 'duration' 而不是 'repeat_count'",
                     ));
                 }
             }
             ContentDetails::Clock(_) => {
                 if helper.duration.is_none() {
                     return Err(serde::de::Error::custom(
-                        "Clock content requires 'duration' instead of 'repeat_count'",
+                        "时钟内容需要 'duration' 而不是 'repeat_count'",
                     ));
                 }
                 if helper.repeat_count.is_some() {
                     return Err(serde::de::Error::custom(
-                        "Clock content uses 'duration' instead of 'repeat_count'",
+                        "时钟内容使用 'duration' 而不是 'repeat_count'",
                     ));
                 }
             }
             ContentDetails::Animation(animation_content) => {
                 if helper.duration.is_none() {
                     return Err(serde::de::Error::custom(
-                        "Animation content requires 'duration' instead of 'repeat_count'",
+                        "动画内容需要 'duration' 而不是 'repeat_count'",
                     ));
                 }
                 if helper.repeat_count.is_some() {
                     return Err(serde::de::Error::custom(
-                        "Animation content requires 'duration' and does not allow 'repeat_count'",
+                        "动画内容需要 'duration' 且不允许 'repeat_count'",
                     ));
                 }
                 if let Err(err) = animation_content.validate() {
@@ -149,14 +149,14 @@ impl<'de> Deserialize<'de> for PlayListItem {
         if requires_repeat_count && helper.repeat_count.is_none() {
             let msg = match &helper.content.data {
                 ContentDetails::Text(_) => {
-                    "When 'scroll' is true, 'repeat_count' must be used instead of 'duration'"
+                    "当 'scroll' 为 true 时，必须使用 'repeat_count' 而不是 'duration'"
                 }
                 ContentDetails::Image(_) => {
-                    "Animated images require 'repeat_count' instead of 'duration'"
+                    "动画图片需要 'repeat_count' 而不是 'duration'"
                 }
                 ContentDetails::Clock(_) => unreachable!(),
                 ContentDetails::Animation(_) => {
-                    "Animation content requires 'duration' instead of 'repeat_count'"
+                    "动画内容需要 'duration' 而不是 'repeat_count'"
                 }
             };
             return Err(serde::de::Error::custom(msg));
@@ -165,7 +165,7 @@ impl<'de> Deserialize<'de> for PlayListItem {
         // Additional check: static content that shouldn't repeat_count
         if !requires_repeat_count && helper.repeat_count.is_some() {
             return Err(serde::de::Error::custom(
-                "Repeat count can only be used with scrolling text or animated images",
+                "重复计数只能用于滚动文本或动画图片",
             ));
         }
 

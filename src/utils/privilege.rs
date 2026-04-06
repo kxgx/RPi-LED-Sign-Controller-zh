@@ -10,9 +10,9 @@ use uzers::{get_current_uid, get_user_by_name};
 /// Check if the program has root privileges
 pub fn check_root_privileges() -> Result<(), String> {
     if get_current_uid() != 0 {
-        return Err("This program must be run as root (sudo) to access the GPIO pins".to_string());
+        return Err("此程序必须以 root 权限运行 (sudo) 才能访问 GPIO 引脚".to_string());
     }
-    info!("Running with root privileges");
+    info!("正在以 root 权限运行");
     Ok(())
 }
 
@@ -49,7 +49,7 @@ pub fn drop_privileges() -> Result<(), Error> {
         None => {
             return Err(Error::new(
                 ErrorKind::NotFound,
-                "Could not find daemon or nobody user for privilege dropping",
+            "找不到 daemon 或 nobody 用户，无法降低权限",
             ));
         }
     };
@@ -59,7 +59,7 @@ pub fn drop_privileges() -> Result<(), Error> {
     let gid = user.primary_group_id();
 
     info!(
-        "Dropping privileges to user {} (uid={}, gid={}) after hardware initialization...",
+        "正在将权限降低到用户 {} (uid={}, gid={})，硬件初始化完成后...",
         username, uid, gid
     );
 
@@ -67,7 +67,7 @@ pub fn drop_privileges() -> Result<(), Error> {
     if let Err(e) = clear_supplementary_groups() {
         return Err(Error::new(
             ErrorKind::PermissionDenied,
-            format!("Failed to clear supplementary groups: {}", e),
+            format!("清除附加组失败: {}", e),
         ));
     }
 
@@ -75,7 +75,7 @@ pub fn drop_privileges() -> Result<(), Error> {
     if let Err(e) = set_both_gid(gid, gid) {
         return Err(Error::new(
             ErrorKind::PermissionDenied,
-            format!("Failed to set GID: {}", e),
+            format!("设置 GID 失败: {}", e),
         ));
     }
 
@@ -83,7 +83,7 @@ pub fn drop_privileges() -> Result<(), Error> {
     if let Err(e) = set_both_uid(uid, uid) {
         return Err(Error::new(
             ErrorKind::PermissionDenied,
-            format!("Failed to set UID: {}", e),
+            format!("设置 UID 失败: {}", e),
         ));
     }
 
@@ -91,10 +91,10 @@ pub fn drop_privileges() -> Result<(), Error> {
     if get_current_uid() == 0 {
         return Err(Error::new(
             ErrorKind::PermissionDenied,
-            "Failed to drop privileges - still running as root!",
+            "降低权限失败 - 仍在以 root 身份运行！",
         ));
     }
 
-    info!("Successfully dropped privileges to user {}", username);
+    info!("已成功将权限降低到用户 {}", username);
     Ok(())
 }

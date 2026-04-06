@@ -12,35 +12,34 @@ REQUIRED_NODE_VERSION="20.9.0"
 NVM_VERSION="v0.39.7"
 NODE_VERSION_TO_USE=""
 
-echo -e "${BLUE}RPi LED Sign Controller - Installation & Update Script${NC}"
+echo -e "${BLUE}树莓派 LED 显示屏控制器 - 安装与更新脚本${NC}"
 echo -e "==============================================="
-echo -e "GitHub Repository: ${GREEN}https://github.com/paviro/rpi-led-sign-controller${NC}"
+echo -e "GitHub 仓库: ${GREEN}https://github.com/paviro/rpi-led-sign-controller${NC}"
 
-# Introduction
-echo -e "\n${BLUE}About this software:${NC}"
-echo -e "This script will install or update the RPi LED Sign Controller, which allows you to"
-echo -e "drive HUB75-compatible RGB LED matrix panels from your Raspberry Pi."
-echo -e "The software provides a web interface for creating and managing text displays,"
-echo -e "animations, and playlists on your LED panels."
+# 介绍
+echo -e "\n${BLUE}关于本软件:${NC}"
+echo -e "此脚本将安装或更新树莓派 LED 显示屏控制器，该控制器允许您从树莓派驱动"
+echo -e "HUB75 兼容的 RGB LED 矩阵面板。该软件提供了一个 Web 界面，用于创建和管理"
+echo -e "LED 面板上的文本显示、动画和播放列表。"
 
-echo -e "\n${YELLOW}This script will:${NC}"
-echo -e "  • Check if the app is already installed and offer to update it"
-echo -e "  • Check for and install required dependencies (Git, Rust, Node.js)"
-echo -e "  • Clone the repository if needed"
-echo -e "  • Build the application from source"
-echo -e "  • Help you configure your LED panel"
-echo -e "  • Install the application as a systemd service"
-echo -e "  • Start the service automatically on boot"
+echo -e "\n${YELLOW}此脚本将会:${NC}"
+echo -e "  • 检查应用是否已安装并提供更新选项"
+echo -e "  • 检查并安装所需的依赖项 (Git, Rust, Node.js)"
+echo -e "  • 克隆仓库（如果需要）"
+echo -e "  • 从源代码构建应用程序"
+echo -e "  • 帮助您配置 LED 面板"
+echo -e "  • 将应用程序安装为 systemd 服务"
+echo -e "  • 设置开机自动启动服务"
 
-echo -e "\n${YELLOW}This script will make changes to your system.${NC}"
-echo -e "${YELLOW}Do you want to proceed with the installation/update?${NC}"
+echo -e "\n${YELLOW}此脚本将对您的系统进行更改。${NC}"
+echo -e "${YELLOW}您要继续安装/更新吗？${NC}"
 
-read -p "Continue? [y/N]: " continue_install
+read -p "继续？ [y/N]: " continue_install
 if [[ "$continue_install" != "y" && "$continue_install" != "Y" ]]; then
-    echo -e "${RED}Installation aborted.${NC}"
+    echo -e "${RED}安装已中止。${NC}"
     exit 1
 fi
-echo -e "${GREEN}Proceeding with installation...${NC}"
+echo -e "${GREEN}正在继续安装...${NC}"
 
 # First, add a helper function for standardized reading near the top of the script
 read_input() {
@@ -73,12 +72,12 @@ stash_repo_changes() {
 
     changes=$(sudo -u $user git status --porcelain)
     if [ -n "$changes" ]; then
-        echo -e "${YELLOW}${label} repository has local changes. Stashing before update...${NC}"
+        echo -e "${YELLOW}${label} 仓库有本地更改。在更新前暂存...${NC}"
         if sudo -u $user git stash push -u -m "install-script-autostash-$(date +%s)"; then
             stashed=1
-            echo -e "${GREEN}Local changes stashed for ${label} repository.${NC}"
+            echo -e "${GREEN}${label} 仓库的本地更改已暂存。${NC}"
         else
-            echo -e "${RED}Failed to stash local changes for ${label} repository.${NC}"
+            echo -e "${RED}${label} 仓库的本地更改暂存失败。${NC}"
             popd > /dev/null
             exit 1
         fi
@@ -90,29 +89,29 @@ stash_repo_changes() {
 
 # Then update the Raspberry Pi detection override
 if ! grep -q "Raspberry Pi" /proc/cpuinfo && ! grep -q "BCM" /proc/cpuinfo; then
-    echo -e "\n${RED}Error: This script must be run on a Raspberry Pi.${NC}"
-    echo -e "${YELLOW}If you are running on a Raspberry Pi and seeing this error,${NC}"
-    echo -e "${YELLOW}please continue by typing 'y' or abort with any other key.${NC}"
-    read -p "Continue anyway? [y/N]: " force_continue
+    echo -e "\n${RED}错误: 此脚本必须在树莓派上运行。${NC}"
+    echo -e "${YELLOW}如果您正在树莓派上运行并看到此错误，${NC}"
+    echo -e "${YELLOW}请输入 'y' 继续，或按其他键中止。${NC}"
+    read -p "仍然继续？ [y/N]: " force_continue
     if [[ "$force_continue" != "y" && "$force_continue" != "Y" ]]; then
-        echo -e "${RED}Installation aborted.${NC}"
+        echo -e "${RED}安装已中止。${NC}"
         exit 1
     fi
-    echo -e "${YELLOW}Continuing installation despite platform check...${NC}"
+    echo -e "${YELLOW}尽管平台检查未通过，仍继续安装...${NC}"
 else
-    echo -e "\n${GREEN}Raspberry Pi detected.${NC}"
+    echo -e "\n${GREEN}检测到树莓派。${NC}"
 fi
 
 # Function to check if running on a Debian-based system
 check_debian_based() {
     if ! command -v apt &> /dev/null && ! command -v apt-get &> /dev/null; then
-        echo -e "${RED}Error: This script requires a Debian-based system (Raspberry Pi OS Lite recommended)${NC}"
-        echo -e "${RED}The 'apt' package manager was not found on your system.${NC}"
-        echo -e "${YELLOW}If you're using a non-Debian system but still want to install, please refer to:${NC}"
+        echo -e "${RED}错误: 此脚本需要基于 Debian 的系统（推荐使用树莓派 OS Lite）${NC}"
+        echo -e "${RED}在您的系统上未找到 'apt' 包管理器。${NC}"
+        echo -e "${YELLOW}如果您使用的是非 Debian 系统但仍想安装，请参考:${NC}"
         echo -e "${BLUE}https://github.com/paviro/rpi-led-sign-controller${NC}"
         exit 1
     fi
-    echo -e "${GREEN}Debian-based system detected.${NC}"
+    echo -e "${GREEN}检测到基于 Debian 的系统。${NC}"
 }
 
 # Add the reconfigure function here, before it's used
@@ -121,16 +120,16 @@ ask_reconfigure() {
     local default="N"
     
     if [ "$reason" == "update" ]; then
-        echo -e "\n${GREEN}✓ Update successful!${NC}"
-        echo -e "${YELLOW}Would you like to modify your LED panel configuration?${NC}"
+        echo -e "\n${GREEN}✓ 更新成功！${NC}"
+        echo -e "${YELLOW}您想修改 LED 面板配置吗？${NC}"
     else
-        echo -e "\n${GREEN}✓ The RPi LED Sign Controller is already installed and up to date.${NC}"
-        echo -e "${YELLOW}Would you like to modify your LED panel configuration?${NC}"
+        echo -e "\n${GREEN}✓ 树莓派 LED 显示屏控制器已安装且为最新版本。${NC}"
+        echo -e "${YELLOW}您想修改 LED 面板配置吗？${NC}"
     fi
     
     if [ -t 0 ]; then
         # Terminal is interactive, read normally
-        read -p "Reconfigure LED panel settings? [y/N]: " reconfigure
+        read -p "重新配置 LED 面板设置？ [y/N]: " reconfigure
     else
         # Running from pipe or non-interactive, use /dev/tty
         read -p "Reconfigure LED panel settings? [y/N]: " reconfigure </dev/tty
@@ -138,43 +137,43 @@ ask_reconfigure() {
     
     if [[ "$reconfigure" != "y" && "$reconfigure" != "Y" ]]; then
         if [ "$reason" == "update" ]; then
-            echo -e "${GREEN}Keeping existing configuration.${NC}"
-            echo -e "${YELLOW}Restarting service with updated binary...${NC}"
+            echo -e "${GREEN}保持现有配置。${NC}"
+            echo -e "${YELLOW}正在使用更新的二进制文件重启服务...${NC}"
             systemctl restart rpi-led-sign.service
-            echo -e "${GREEN}Service restarted successfully.${NC}"
+            echo -e "${GREEN}服务重启成功。${NC}"
         else
-            echo -e "${GREEN}No changes needed. Your installation will continue to use the existing settings.${NC}"
+            echo -e "${GREEN}无需更改。您的安装将继续使用现有设置。${NC}"
             
             # In "no_update" case, make sure service is running
             if ! systemctl is-active --quiet rpi-led-sign.service; then
-                echo -e "${YELLOW}Starting service...${NC}"
+                echo -e "${YELLOW}正在启动服务...${NC}"
                 systemctl start rpi-led-sign.service
-                echo -e "${GREEN}Service started successfully.${NC}"
+                echo -e "${GREEN}服务启动成功。${NC}"
             fi
         fi
         
-        # Display common completion information
-        echo -e "\n${GREEN}===== RPi LED Sign Controller Information =====${NC}"
-        echo -e "Web interface available at: http://$(hostname -I | awk '{print $1}'):$(systemctl show rpi-led-sign.service -p Environment | grep LED_PORT | sed 's/.*LED_PORT=\([0-9]*\).*/\1/' || echo "3000")"
-        echo -e "Source code is located at: ${BLUE}/usr/local/src/rpi-led-sign-controller${NC}"
-        echo -e "You can manage the service with: sudo systemctl [start|stop|restart|status] rpi-led-sign.service"
+        # 显示通用完成信息
+        echo -e "\n${GREEN}===== 树莓派 LED 显示屏控制器信息 =====${NC}"
+        echo -e "Web 界面地址: http://$(hostname -I | awk '{print $1}'):$(systemctl show rpi-led-sign.service -p Environment | grep LED_PORT | sed 's/.*LED_PORT=\([0-9]*\).*/\1/' || echo "3000")"
+        echo -e "源代码位于: ${BLUE}/usr/local/src/rpi-led-sign-controller${NC}"
+        echo -e "您可以使用以下命令管理服务: sudo systemctl [start|stop|restart|status] rpi-led-sign.service"
         echo -e ""
-        echo -e "${BLUE}===== Update & Maintenance =====${NC}"
-        echo -e "To update in the future, you can either:"
-        echo -e "  • Run this script again: ${BLUE}curl -sSL https://raw.githubusercontent.com/paviro/rpi-led-sign-controller/main/scripts/install.sh | sudo bash${NC}"
-        echo -e "  • Or from the source directory: ${BLUE}cd /usr/local/src/rpi-led-sign-controller && sudo bash scripts/install.sh${NC}"
+        echo -e "${BLUE}===== 更新与维护 =====${NC}"
+        echo -e "将来要更新，您可以："
+        echo -e "  • 再次运行此脚本: ${BLUE}curl -sSL https://raw.githubusercontent.com/paviro/rpi-led-sign-controller/main/scripts/install.sh | sudo bash${NC}"
+        echo -e "  • 或者从源代码目录: ${BLUE}cd /usr/local/src/rpi-led-sign-controller && sudo bash scripts/install.sh${NC}"
         echo -e ""
-        echo -e "To uninstall, run: ${BLUE}sudo bash /usr/local/src/rpi-led-sign-controller/scripts/uninstall.sh${NC}"
+        echo -e "要卸载，请运行: ${BLUE}sudo bash /usr/local/src/rpi-led-sign-controller/scripts/uninstall.sh${NC}"
         echo -e ""
-        echo -e "For more information, visit: ${BLUE}https://github.com/paviro/rpi-led-sign-controller${NC}"
+        echo -e "更多信息请访问: ${BLUE}https://github.com/paviro/rpi-led-sign-controller${NC}"
         return 1  # Don't reconfigure
     fi
     
-    echo -e "${YELLOW}Proceeding with reconfiguration...${NC}"
+    echo -e "${YELLOW}正在继续配置...${NC}"
     
     # Stop the service before reconfiguration if it's running
     if systemctl is-active --quiet rpi-led-sign.service; then
-        echo -e "${YELLOW}Stopping service before reconfiguration...${NC}"
+        echo -e "${YELLOW}在重新配置前停止服务...${NC}"
         systemctl stop rpi-led-sign.service
     fi
     return 0  # Reconfigure
@@ -187,22 +186,22 @@ check_system_node_version() {
         local system_version
         system_version=$(node -v | tr -d 'v')
         if dpkg --compare-versions "$system_version" ge "$required_version"; then
-            echo -e "${GREEN}System Node.js version $system_version meets minimum requirement (>= $required_version).${NC}"
+            echo -e "${GREEN}系统 Node.js 版本 $system_version 满足最低要求 (>= $required_version)。${NC}"
         else
-            echo -e "${YELLOW}System Node.js version $system_version is below required $required_version.${NC}"
-            echo -e "${YELLOW}Node.js will be installed or updated via NVM.${NC}"
+            echo -e "${YELLOW}系统 Node.js 版本 $system_version 低于要求的 $required_version。${NC}"
+            echo -e "${YELLOW}Node.js 将通过 NVM 安装或更新。${NC}"
         fi
     else
-        echo -e "${YELLOW}Node.js not found in system PATH. Installing via NVM...${NC}"
+        echo -e "${YELLOW}在系统 PATH 中未找到 Node.js。正在通过 NVM 安装...${NC}"
     fi
 }
 
 ensure_curl_installed() {
     if ! command -v curl &> /dev/null; then
-        echo -e "${YELLOW}curl not found. Installing curl...${NC}"
+        echo -e "${YELLOW}curl 未找到。正在安装 curl...${NC}"
         apt-get update
         apt-get install -y curl
-        echo -e "${GREEN}curl installed successfully.${NC}"
+        echo -e "${GREEN}curl 安装成功。${NC}"
     fi
 }
 
@@ -212,14 +211,14 @@ ensure_nvm_installed() {
     local nvm_dir="$home_dir/.nvm"
 
     if sudo -u "$user" bash -c "[ -s '$nvm_dir/nvm.sh' ]" >/dev/null 2>&1; then
-        echo -e "${GREEN}NVM already installed for user $user.${NC}"
+        echo -e "${GREEN}NVM 已为用户 $user 安装。${NC}"
         return
     fi
 
-    echo -e "${YELLOW}NVM not found. Installing NVM ${NVM_VERSION} for user $user...${NC}"
+    echo -e "${YELLOW}未找到 NVM。正在为用户 $user 安装 NVM ${NVM_VERSION}...${NC}"
     ensure_curl_installed
     sudo -u "$user" bash -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh | bash"
-    echo -e "${GREEN}NVM installed successfully for user $user.${NC}"
+    echo -e "${GREEN}NVM 为用户 $user 安装成功。${NC}"
 }
 
 ensure_node_version() {
@@ -247,16 +246,16 @@ ensure_node_version() {
     fi
 
     if [ -z "$selected_version" ]; then
-        echo -e "${YELLOW}Installing Node.js $required_version via NVM...${NC}"
+        echo -e "${YELLOW}正在通过 NVM 安装 Node.js $required_version...${NC}"
         sudo -u "$user" bash -c 'export NVM_DIR="'"$nvm_dir"'"; [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"; nvm install '"$required_version"
         selected_version="$required_version"
     else
-        echo -e "${GREEN}Using existing Node.js $selected_version via NVM.${NC}"
+        echo -e "${GREEN}使用现有的 Node.js $selected_version (通过 NVM)。${NC}"
     fi
 
     # Try to set alias and use the selected version; if it fails, reinstall
     if ! sudo -u "$user" bash -c 'export NVM_DIR="'"$nvm_dir"'"; [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"; nvm alias default '"$selected_version"' >/dev/null 2>&1'; then
-        echo -e "${YELLOW}Selected version not available. Installing Node.js $required_version via NVM...${NC}"
+        echo -e "${YELLOW}所选版本不可用。正在通过 NVM 安装 Node.js $required_version...${NC}"
         sudo -u "$user" bash -c 'export NVM_DIR="'"$nvm_dir"'"; [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"; nvm install '"$required_version"
         selected_version="$required_version"
         sudo -u "$user" bash -c 'export NVM_DIR="'"$nvm_dir"'"; [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"; nvm alias default '"$selected_version"' >/dev/null 2>&1'
@@ -276,7 +275,7 @@ run_with_node() {
     local nvm_dir="$home_dir/.nvm"
 
     if [ -z "$node_version" ]; then
-        echo -e "${RED}Node.js version is not set. Cannot run Node-dependent command.${NC}"
+        echo -e "${RED}Node.js 版本未设置。无法运行依赖 Node 的命令。${NC}"
         exit 1
     fi
 
@@ -298,12 +297,12 @@ ACTUAL_HOME=$(eval echo ~$ACTUAL_USER)
 
 # Check for and install git if necessary
 if ! command -v git &> /dev/null; then
-    echo -e "${YELLOW}Git not found. Installing git...${NC}"
+    echo -e "${YELLOW}Git 未找到。正在安装 git...${NC}"
     apt-get update
     apt-get install -y git
-    echo -e "${GREEN}Git installed successfully.${NC}"
+    echo -e "${GREEN}Git 安装成功。${NC}"
 else
-    echo -e "${GREEN}Git is already installed.${NC}"
+    echo -e "${GREEN}Git 已安装。${NC}"
 fi
 
 # Check for and install Node.js (via NVM) if necessary
@@ -313,15 +312,15 @@ ensure_node_version "$ACTUAL_USER" "$ACTUAL_HOME" "$REQUIRED_NODE_VERSION" NODE_
 
 # Check for and install rust if necessary
 if ! sudo -u $ACTUAL_USER bash -c "source $ACTUAL_HOME/.cargo/env 2>/dev/null && command -v rustc &> /dev/null && command -v cargo &> /dev/null"; then
-    echo -e "${YELLOW}Rust not found. Installing rust for user $ACTUAL_USER...${NC}"
+    echo -e "${YELLOW}Rust 未找到。正在为用户 $ACTUAL_USER 安装 rust...${NC}"
     apt-get update
     apt-get install -y curl build-essential
     
     # Install Rust for the actual user
     sudo -u $ACTUAL_USER bash -c "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
-    echo -e "${GREEN}Rust installed successfully for user $ACTUAL_USER.${NC}"
+    echo -e "${GREEN}Rust 为用户 $ACTUAL_USER 安装成功。${NC}"
 else
-    echo -e "${GREEN}Rust is already installed for user $ACTUAL_USER.${NC}"
+    echo -e "${GREEN}Rust 已为用户 $ACTUAL_USER 安装。${NC}"
 fi
 
 # Store current directory
@@ -331,9 +330,9 @@ CURRENT_DIR=$(pwd)
 APP_INSTALLED=0
 if [ -f "/usr/local/bin/rpi_led_sign_controller" ]; then
     APP_INSTALLED=1
-    echo -e "${GREEN}RPi LED Sign Controller is already installed.${NC}"
+    echo -e "${GREEN}树莓派 LED 显示屏控制器已安装。${NC}"
 else
-    echo -e "${YELLOW}RPi LED Sign Controller is not yet installed.${NC}"
+    echo -e "${YELLOW}树莓派 LED 显示屏控制器尚未安装。${NC}"
 fi
 
 # Check if we're inside the repository directory
@@ -342,12 +341,12 @@ INSIDE_REPO=0
 if [ -f "Cargo.toml" ] && grep -q "rpi_led_sign_controller" "Cargo.toml" 2>/dev/null; then
     INSIDE_REPO=1
     REPO_DIR=$(pwd)
-    echo -e "${BLUE}Already in project directory.${NC}"
+    echo -e "${BLUE}已在项目目录中。${NC}"
 # Or we're in the scripts subdirectory
 elif [ -f "../Cargo.toml" ] && grep -q "rpi_led_sign_controller" "../Cargo.toml" 2>/dev/null; then
     INSIDE_REPO=1
     REPO_DIR=$(cd .. && pwd)
-    echo -e "${BLUE}Already in project directory (scripts subfolder).${NC}"
+    echo -e "${BLUE}已在项目目录中 (scripts 子文件夹)。${NC}"
 fi
 
 # Set standard repository location if not already inside repo
@@ -359,10 +358,10 @@ fi
 if [ -d "$REPO_DIR" ]; then
     # Check if any files in the repo have incorrect ownership
     if [ "$(find "$REPO_DIR" -not -user $ACTUAL_USER | wc -l)" -gt 0 ]; then
-        echo -e "${YELLOW}Fixing repository permissions...${NC}"
-        echo -e "${BLUE}This ensures your user can pull updates from GitHub${NC}"
+        echo -e "${YELLOW}正在修复仓库权限...${NC}"
+        echo -e "${BLUE}这确保您的用户可以从 GitHub 拉取更新${NC}"
         chown -R $ACTUAL_USER:$ACTUAL_USER "$REPO_DIR"
-        echo -e "${GREEN}Repository permissions fixed.${NC}"
+        echo -e "${GREEN}仓库权限已修复。${NC}"
     fi
 fi
 
@@ -373,14 +372,14 @@ REPO_JUST_CLONED=0
 if [ $INSIDE_REPO -eq 0 ]; then
     # We're not in the repo directory, check if it exists at the standard location
     if [ -d "$REPO_DIR" ]; then
-        echo -e "${BLUE}Found existing repository at $REPO_DIR${NC}"
+        echo -e "${BLUE}在标准位置找到现有仓库 $REPO_DIR${NC}"
         cd "$REPO_DIR"
     else
-        echo -e "${YELLOW}Creating repository directory...${NC}"
+        echo -e "${YELLOW}正在创建仓库目录...${NC}"
         mkdir -p "$REPO_DIR"
         chown $ACTUAL_USER:$ACTUAL_USER "$REPO_DIR"
         
-        echo -e "${YELLOW}Cloning repository as user $ACTUAL_USER...${NC}"
+        echo -e "${YELLOW}正在以用户 $ACTUAL_USER 身份克隆仓库...${NC}"
         # Clone the repository as the regular user
         sudo -u $ACTUAL_USER git clone https://github.com/paviro/rpi-led-sign-controller.git "$REPO_DIR"
         cd "$REPO_DIR"
@@ -390,7 +389,7 @@ fi
 
 # If app is installed, always check for updates
 if [ $APP_INSTALLED -eq 1 ]; then
-    echo -e "${YELLOW}Fetching the latest changes from GitHub...${NC}"
+    echo -e "${YELLOW}正在从 GitHub 获取最新更改...${NC}"
     sudo -u $ACTUAL_USER git fetch
 
     # Now check if we're behind the remote repository
@@ -398,26 +397,26 @@ if [ $APP_INSTALLED -eq 1 ]; then
     git_status=$(sudo -u $ACTUAL_USER git status -uno)
     if echo "$git_status" | grep -q "Your branch is behind"; then
         UPDATES_AVAILABLE=1
-        echo -e "${YELLOW}Updates are available.${NC}"
+        echo -e "${YELLOW}有可用更新。${NC}"
         
         # Stash local changes before pulling updates
         stash_repo_changes "$REPO_DIR" $ACTUAL_USER "Backend" "BACKEND_STASHED_PRIMARY"
         
         # Pull changes as the regular user
         if ! sudo -u $ACTUAL_USER git pull; then
-            echo -e "${RED}Failed to update backend repository.${NC}"
+            echo -e "${RED}更新后端仓库失败。${NC}"
             if [ "${BACKEND_STASHED_PRIMARY:-0}" -eq 1 ]; then
-                echo -e "${YELLOW}Your previous local changes were stashed. Use 'git stash list' followed by 'git stash pop' to restore them manually.${NC}"
+                echo -e "${YELLOW}您之前的本地更改已暂存。请使用 'git stash list' 后跟 'git stash pop' 手动恢复它们。${NC}"
             fi
             exit 1
         fi
 
         if [ "${BACKEND_STASHED_PRIMARY:-0}" -eq 1 ]; then
-            echo -e "${YELLOW}Local backend changes remain stashed. Run 'git stash list' and 'git stash pop' to restore them when ready.${NC}"
+            echo -e "${YELLOW}本地后端更改仍保持暂存状态。准备好后运行 'git stash list' 和 'git stash pop' 恢复它们。${NC}"
         fi
-        echo -e "${GREEN}Repository updated successfully.${NC}"
+        echo -e "${GREEN}仓库更新成功。${NC}"
     else
-        echo -e "${GREEN}Repository is already up to date.${NC}"
+        echo -e "${GREEN}仓库已是最新版本。${NC}"
     fi
     
     # Create update marker file with proper ownership
@@ -677,7 +676,7 @@ if [ "$BACKEND_UPDATES_AVAILABLE" -eq 1 ] || [ ! -f "/usr/local/bin/rpi_led_sign
             else
                 echo -e "${YELLOW}Starting service before exit...${NC}"
                 systemctl start rpi-led-sign.service
-                echo -e "${GREEN}Service started successfully.${NC}"
+                echo -e "${GREEN}服务启动成功。${NC}"
             fi
             exit 0
         fi
@@ -694,7 +693,7 @@ if [ $APP_INSTALLED -eq 1 ] && [ $BACKEND_UPDATES_AVAILABLE -eq 0 ] && [ $FRONTE
         else
             echo -e "${YELLOW}Starting service before exit...${NC}"
             systemctl start rpi-led-sign.service
-            echo -e "${GREEN}Service started successfully.${NC}"
+            echo -e "${GREEN}服务启动成功。${NC}"
         fi
         exit 0
     fi
@@ -711,10 +710,10 @@ fi
 # Interactive LED panel configuration
 ###########################################
 
-echo -e "${BLUE}LED Panel Configuration${NC}"
+echo -e "${BLUE}LED 面板配置${NC}"
 echo -e "-----------------------------------------------"
-echo -e "Let's configure your LED panel. You will be able to test the configuration before finalizing."
-echo -e "For each option, press Enter to use the default value or enter a custom value."
+echo -e "让我们配置您的 LED 面板。您可以在最终确定之前测试配置。"
+echo -e "对于每个选项，按 Enter 键使用默认值，或输入自定义值。"
 
 # Default values - These should match the table exactly
 DEFAULT_ROWS=32
@@ -808,8 +807,8 @@ get_yes_no() {
 
 # Function to test the current configuration
 test_configuration() {
-    echo -e "${YELLOW}Testing LED panel with current configuration...${NC}"
-    echo -e "${RED}The program will run for 10 seconds. Press Ctrl+C to stop earlier if needed.${NC}"
+    echo -e "${YELLOW}正在使用当前配置测试 LED 面板...${NC}"
+    echo -e "${RED}程序将运行 10 秒。如果需要，请按 Ctrl+C 提前停止。${NC}"
     
     # Build the command with required settings
     CMD="/usr/local/bin/rpi_led_sign_controller"
@@ -915,7 +914,7 @@ test_configuration() {
     
     # For the configuration test
     if [ -t 0 ]; then
-        read -p "Did the LED panel display correctly? (y/n): " is_working
+        read -p "LED 面板显示是否正确？ (y/n): " is_working
     else
         read -p "Did the LED panel display correctly? (y/n): " is_working </dev/tty
     fi
@@ -928,11 +927,11 @@ test_configuration() {
 }
 
 configure_panel() {
-    echo -e "${YELLOW}Please provide the following LED panel information:${NC}"
+    echo -e "${YELLOW}请提供以下 LED 面板信息:${NC}"
     
-    echo -e "\n${BLUE}Driver Selection (REQUIRED)${NC}"
-    echo "1. native (Pure Rust driver - recommended default)"
-    echo "2. binding (C++ binding driver - legacy fallback)"
+    echo -e "\n${BLUE}驱动选择 (必填)${NC}"
+    echo "1. native (纯 Rust 驱动 - 推荐默认)"
+    echo "2. binding (C++ 绑定驱动 - 旧版备选)"
     read -p "Select driver type [1]: " driver_choice
     if [[ $driver_choice == "2" ]]; then
         DRIVER="binding"
@@ -940,40 +939,40 @@ configure_panel() {
         DRIVER="native"
     fi
     
-    echo -e "\n${BLUE}Panel Dimensions${NC}"
+    echo -e "\n${BLUE}面板尺寸${NC}"
     echo "Default: $DEFAULT_ROWS rows, $DEFAULT_COLS columns"
     ROWS=$(get_input "Number of rows (default: $DEFAULT_ROWS)" $DEFAULT_ROWS)
     COLS=$(get_input "Number of columns (default: $DEFAULT_COLS)" $DEFAULT_COLS)
     CHAIN_LENGTH=$(get_input "Number of panels daisy-chained together (default: $DEFAULT_CHAIN_LENGTH)" $DEFAULT_CHAIN_LENGTH)
     PARALLEL=$(get_input "Number of chains to run in parallel (1-3) (default: $DEFAULT_PARALLEL)" $DEFAULT_PARALLEL)
     
-    echo -e "\n${BLUE}Hardware Configuration${NC}"
-    echo "Common hardware mappings:"
-    echo "  - regular (default) - Standard GPIO mapping"
+    echo -e "\n${BLUE}硬件配置${NC}"
+    echo "常见硬件映射:"
+    echo "  - regular (默认) - 标准 GPIO 映射"
     echo "  - adafruit-hat - Adafruit RGB Matrix Bonnet/HAT"
-    echo "  - adafruit-hat-pwm - Adafruit HAT with hardware PWM"
+    echo "  - adafruit-hat-pwm - 带硬件 PWM 的 Adafruit HAT"
     echo "  - regular-pi1 - Standard GPIO mapping for Raspberry Pi 1"
     echo "  - classic - Early version of matrix wiring"
     echo "  - classic-pi1 - Early version for Pi 1 Rev A"
     
     HARDWARE_MAPPING=$(get_input "Hardware mapping (default: $DEFAULT_HARDWARE_MAPPING)" $DEFAULT_HARDWARE_MAPPING)
     
-    echo -e "\n${BLUE}GPIO Settings${NC}"
-    echo "GPIO slowdown is needed for newer Raspberry Pi models:"
-    echo "  - Pi 0-3: usually value 1 or 2"
-    echo "  - Pi 4: usually value 3 or 4"
-    echo "  - (leave empty for automatic selection)"
+    echo -e "\n${BLUE}GPIO 设置${NC}"
+    echo "新树莓派型号需要 GPIO 减速:"
+    echo "  - Pi 0-3: 通常为值 1 或 2"
+    echo "  - Pi 4: 通常为值 3 或 4"
+    echo "  - (留空以自动选择)"
     
     GPIO_SLOWDOWN=$(get_input "GPIO slowdown factor (leave empty for auto)" "$DEFAULT_GPIO_SLOWDOWN")
     
-    echo -e "\n${BLUE}Panel Performance Settings${NC}"
+    echo -e "\n${BLUE}面板性能设置${NC}"
     PWM_BITS=$(get_input "PWM bits (1-11) (default: $DEFAULT_PWM_BITS)" $DEFAULT_PWM_BITS)
     PWM_LSB_NANOSECONDS=$(get_input "PWM LSB nanoseconds (base time-unit) (default: $DEFAULT_PWM_LSB_NANOSECONDS)" $DEFAULT_PWM_LSB_NANOSECONDS)
     DITHER_BITS=$(get_input "Dither bits (0 for no dithering) (default: $DEFAULT_DITHER_BITS)" $DEFAULT_DITHER_BITS)
     
-    echo -e "\n${BLUE}Row Address Setup${NC}"
-    echo "Row setter options:"
-    echo "  - direct (default) - Direct row selection"
+    echo -e "\n${BLUE}行地址设置${NC}"
+    echo "行设置器选项:"
+    echo "  - direct (默认) - 直接行选择"
     echo "  - shiftregister - AB addressed panels"
     echo "  - directabcdline - Direct ABCD line selection"
     echo "  - abcshiftregister - ABC shift register selection"
@@ -981,9 +980,9 @@ configure_panel() {
     
     ROW_SETTER=$(get_input "Row setter (default: $DEFAULT_ROW_SETTER)" $DEFAULT_ROW_SETTER)
     
-    echo -e "\n${BLUE}Color Settings${NC}"
-    echo "Common LED sequences:"
-    echo "  - RGB (most panels)"
+    echo -e "\n${BLUE}颜色设置${NC}"
+    echo "常见 LED 序列:"
+    echo "  - RGB (大多数面板)"
     echo "  - RBG"
     echo "  - GRB"
     echo "  - GBR"
@@ -993,15 +992,15 @@ configure_panel() {
     LED_SEQUENCE=$(get_input "LED color sequence (default: $DEFAULT_LED_SEQUENCE)" $DEFAULT_LED_SEQUENCE)
     
     # Panel type
-    echo -e "\n${BLUE}Advanced Panel Settings${NC}"
-    echo "Some panels need special initialization, e.g., FM6126A"
+    echo -e "\n${BLUE}高级面板设置${NC}"
+    echo "某些面板需要特殊初始化，例如 FM6126A"
     
     PANEL_TYPE=$(get_input "Panel type (leave empty if not needed)" "$DEFAULT_PANEL_TYPE")
     
     # Multiplexing 
-    echo "Multiplexing options:"
-    echo "  1. None (default) - No multiplexing"
-    echo "  2. Stripe - Traditional line-by-line"
+    echo "多路复用选项:"
+    echo "  1. 无 (默认) - 无多路复用"
+    echo "  2. Stripe - 传统的逐行扫描"
     echo "  3. Checkered/Checker - Alternate pixels on different scan lines"
     echo "  4. Spiral - Panel using spiral of matrix segments"
     echo "  5. ZStripe/ZStripe08 - Z-stripe with 8 pixel intervals"
@@ -1050,7 +1049,7 @@ configure_panel() {
     PIXEL_MAPPER=$(get_input "Pixel mapper (leave empty for none)" "$DEFAULT_PIXEL_MAPPER")
     
     # Advanced switch options
-    echo -e "\n${BLUE}Additional Options${NC}"
+    echo -e "\n${BLUE}附加选项${NC}"
     INTERLACED=$(get_yes_no "Enable interlaced scan mode?" "n")
 
     if [[ "$DRIVER" == "binding" ]]; then
@@ -1067,7 +1066,7 @@ configure_panel() {
     LIMIT_REFRESH_RATE=$(get_input "Limit refresh rate (Hz, 0 for unlimited) (default: $DEFAULT_LIMIT_REFRESH_RATE)" $DEFAULT_LIMIT_REFRESH_RATE)
     MAX_BRIGHTNESS=$(get_input "Maximum brightness limit (0-100) (default: $DEFAULT_MAX_BRIGHTNESS)" $DEFAULT_MAX_BRIGHTNESS)
     
-    echo -e "\n${BLUE}Web Interface${NC}"
+    echo -e "\n${BLUE}Web 界面${NC}"
     WEB_PORT=$(get_input "Web server port (default: $DEFAULT_WEB_PORT)" $DEFAULT_WEB_PORT)
     WEB_INTERFACE=$(get_input "Network interface to bind to (default: $DEFAULT_WEB_INTERFACE)" $DEFAULT_WEB_INTERFACE)
 }
@@ -1076,11 +1075,11 @@ configure_panel() {
 configure_panel
 
 while ! test_configuration; do
-    echo -e "${YELLOW}Configuration test failed. Let's adjust the settings.${NC}"
+    echo -e "${YELLOW}配置测试失败。让我们调整设置。${NC}"
     configure_panel
 done
 
-echo -e "${GREEN}Great! Configuration test successful.${NC}"
+echo -e "${GREEN}太棒了！配置测试成功。${NC}"
 
 # Create environment variables string for systemd service
 ENV_VARS=""
@@ -1185,7 +1184,7 @@ if [ "$INVERSE_COLORS" -eq 1 ]; then
 fi
 
 # Create systemd service with the configuration
-echo -e "${YELLOW}Creating systemd service with your configuration...${NC}"
+echo -e "${YELLOW}正在使用您的配置创建 systemd 服务...${NC}"
 cat > /etc/systemd/system/rpi-led-sign.service <<EOF
 [Unit]
 Description=RPi LED Sign Controller
@@ -1214,21 +1213,21 @@ EOF
 systemctl daemon-reload
 systemctl enable rpi-led-sign.service
 systemctl start rpi-led-sign.service
-echo -e "${GREEN}Systemd service installed and started.${NC}"
+echo -e "${GREEN}Systemd 服务已安装并启动。${NC}"
 
 # Return to the original directory
 cd $CURRENT_DIR
 
-echo -e "${GREEN}Installation complete!${NC}"
-echo -e "Web interface available at: http://$(hostname -I | awk '{print $1}'):$WEB_PORT"
-echo -e "Source code is located at: ${BLUE}/usr/local/src/rpi-led-sign-controller${NC}"
-echo -e "You can manage the service with: sudo systemctl [start|stop|restart|status] rpi-led-sign.service"
+echo -e "${GREEN}安装完成！${NC}"
+echo -e "Web 界面地址: http://$(hostname -I | awk '{print $1}'):$WEB_PORT"
+echo -e "源代码位于: ${BLUE}/usr/local/src/rpi-led-sign-controller${NC}"
+echo -e "您可以使用以下命令管理服务: sudo systemctl [start|stop|restart|status] rpi-led-sign.service"
 echo -e ""
-echo -e "To update in the future, you can either:"
-echo -e "  • Run this script again: ${BLUE}curl -sSL https://raw.githubusercontent.com/paviro/rpi-led-sign-controller/main/scripts/install.sh | sudo bash${NC}"
-echo -e "  • Or from the source directory: ${BLUE}cd /usr/local/src/rpi-led-sign-controller && sudo bash scripts/install.sh${NC}"
+echo -e "将来要更新，您可以："
+echo -e "  • 再次运行此脚本: ${BLUE}curl -sSL https://raw.githubusercontent.com/paviro/rpi-led-sign-controller/main/scripts/install.sh | sudo bash${NC}"
+echo -e "  • 或者从源代码目录: ${BLUE}cd /usr/local/src/rpi-led-sign-controller && sudo bash scripts/install.sh${NC}"
 echo -e ""
-echo -e "To uninstall, run: ${BLUE}sudo bash /usr/local/src/rpi-led-sign-controller/scripts/uninstall.sh${NC}"
+echo -e "要卸载，请运行: ${BLUE}sudo bash /usr/local/src/rpi-led-sign-controller/scripts/uninstall.sh${NC}"
 echo -e ""
-echo -e "For more information, visit: ${BLUE}https://github.com/paviro/rpi-led-sign-controller${NC}"
+echo -e "更多信息请访问: ${BLUE}https://github.com/paviro/rpi-led-sign-controller${NC}"
 exit 0

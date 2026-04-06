@@ -76,7 +76,7 @@ async fn main() {
         .parse_env("RUST_LOG") // Allow overriding with RUST_LOG environment variable
         .init();
 
-    info!("Starting LED Sign Controller");
+    info!("正在启动 LED  signage 控制器");
 
     // Check for root privileges before doing anything else
     if let Err(e) = check_root_privileges() {
@@ -89,16 +89,16 @@ async fn main() {
     unsafe {
         // Set nice level to -20
         libc::nice(-20);
-        debug!("Set process priority to -20");
+        debug!("已将进程优先级设置为 -20");
 
         // Set real-time scheduling with high priority
         let pid = libc::getpid();
         let sched_param = libc::sched_param { sched_priority: 99 };
         if libc::sched_setscheduler(pid, libc::SCHED_FIFO, &sched_param) != 0 {
             let err = std::io::Error::last_os_error();
-            warn!("Failed to set real-time scheduling: {}", err);
+            warn!("设置实时调度策略失败: {}", err);
         } else {
-            debug!("Set real-time scheduling policy with priority 99");
+            debug!("已设置实时调度策略，优先级为 99");
         }
     }
 
@@ -117,11 +117,11 @@ async fn main() {
     let storage = create_storage(None);
 
     // Create the driver - this might drop privileges
-    info!("Initializing LED matrix driver (requires elevated privileges)");
+    info!("正在初始化 LED 矩阵驱动（需要提升权限）");
     let driver = match create_driver(&display_config) {
         Ok(driver) => driver,
         Err(e) => {
-            error!("Failed to initialize LED matrix driver: {}", e);
+            error!("初始化 LED 矩阵驱动失败: {}", e);
             std::process::exit(1);
         }
     };
@@ -130,7 +130,7 @@ async fn main() {
     #[cfg(target_os = "linux")]
     {
         if let Err(e) = drop_privileges() {
-            error!("Failed to drop privileges: {}", e);
+            error!("降低权限失败: {}", e);
         }
     }
 
@@ -142,18 +142,18 @@ async fn main() {
 
         let mut display_manager = if let Some(playlist) = persisted_playlist {
             info!(
-                "Loaded playlist from filesystem with {} items",
+                "已从文件系统加载播放列表，包含 {} 个项目",
                 playlist.items.len()
             );
             DisplayManager::with_playlist_config_and_driver(playlist, &display_config, driver)
         } else {
-            info!("No saved playlist found, using default");
+            info!("未找到已保存的播放列表，使用默认设置");
             DisplayManager::with_config_and_driver(&display_config, driver)
         };
 
         // Apply the saved brightness if available
         if let Some(brightness) = persisted_brightness {
-            info!("Applying saved brightness: {}", brightness);
+            info!("应用已保存的亮度设置: {}", brightness);
             display_manager.set_brightness(brightness);
         }
 
@@ -163,7 +163,7 @@ async fn main() {
     // Set up signal handlers for clean shutdown
     let display_for_shutdown = display.clone();
     if let Err(e) = ctrlc::set_handler(move || {
-        info!("Received termination signal, shutting down...");
+        info!("收到终止信号，正在关闭...");
         SHUTDOWN_FLAG.store(true, Ordering::SeqCst);
 
         // Try to get a lock on the display and shut it down
@@ -172,12 +172,12 @@ async fn main() {
             // Clear the display before shutting down
             display_guard.shutdown();
         } else {
-            println!("Could not acquire display lock for shutdown - display might not be properly cleared");
+            println!("无法获取显示锁以进行关闭 - 显示屏可能未正确清除");
         }
 
         std::process::exit(0);
     }) {
-        error!("Error setting Ctrl-C handler: {}", e);
+        error!("设置 Ctrl-C 处理程序时出错: {}", e);
     }
 
     // Create SSE state manager
@@ -187,7 +187,7 @@ async fn main() {
         let display_clone = display.clone();
         let sse_state_clone = sse_state.clone();
         async move {
-            debug!("Display update task started");
+            debug!("显示更新任务已启动");
             display_loop(display_clone, sse_state_clone).await;
         }
     });
@@ -241,23 +241,23 @@ async fn main() {
 
     let addr = SocketAddr::from((ip_addr, display_config.port));
 
-    info!("Server running on http://{}", addr);
+    info!("服务器运行在 http://{}", addr);
 
     if let Err(e) = axum::serve(
         tokio::net::TcpListener::bind(addr)
             .await
             .unwrap_or_else(|e| {
-                error!("Failed to bind to address {}: {}", addr, e);
+                error!("绑定到地址 {} 失败: {}", addr, e);
                 std::process::exit(1);
             }),
         app,
     )
     .await
     {
-        error!("Server error: {}", e);
+        error!("服务器错误: {}", e);
     }
 
-    info!("Application exiting, cleaning up display...");
+    info!("应用程序正在退出，正在清理显示...");
     let mut display_guard = display.lock().await;
     display_guard.shutdown();
 }

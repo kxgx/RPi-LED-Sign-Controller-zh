@@ -33,7 +33,7 @@ fn build_thumbnail(image: &DynamicImage) -> Result<(Vec<u8>, u32, u32), StatusCo
     thumbnail
         .write_to(&mut cursor, ImageFormat::Png)
         .map_err(|err| {
-            error!("Failed to encode thumbnail PNG: {}", err);
+            error!("缩略图 PNG 编码失败: {}", err);
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
@@ -44,14 +44,14 @@ fn decode_image_from_bytes(bytes: &[u8]) -> Result<DynamicImage, StatusCode> {
     let mut reader = ImageReader::new(Cursor::new(bytes));
     reader = reader.with_guessed_format().map_err(|err| {
         warn!(
-            "Failed to guess image format while regenerating thumbnail: {}",
+            "重新生成缩略图时猜测图片格式失败: {}",
             err
         );
         StatusCode::UNSUPPORTED_MEDIA_TYPE
     })?;
     reader.decode().map_err(|err| {
         warn!(
-            "Failed to decode image while regenerating thumbnail: {}",
+            "重新生成缩略图时解码图片失败: {}",
             err
         );
         StatusCode::UNSUPPORTED_MEDIA_TYPE
@@ -101,12 +101,12 @@ pub async fn upload_image(
 
     let mut reader = ImageReader::new(Cursor::new(&uploaded));
     reader = reader.with_guessed_format().map_err(|err| {
-        warn!("Failed to guess image format: {}", err);
+        warn!("猜测图片格式失败: {}", err);
         StatusCode::UNSUPPORTED_MEDIA_TYPE
     })?;
 
     let decoded = reader.decode().map_err(|err| {
-        warn!("Failed to decode image: {}", err);
+        warn!("解码图片失败: {}", err);
         StatusCode::UNSUPPORTED_MEDIA_TYPE
     })?;
     let width = decoded.width();
@@ -116,7 +116,7 @@ pub async fn upload_image(
     decoded
         .write_to(&mut cursor, ImageFormat::Png)
         .map_err(|err| {
-            error!("Failed to encode PNG: {}", err);
+            error!("PNG 编码失败: {}", err);
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
     let png_bytes = cursor.into_inner();
@@ -183,7 +183,7 @@ pub async fn fetch_image_thumbnail(
     {
         let storage_guard = storage.lock().unwrap();
         if !storage_guard.save_thumbnail(&image_id, &thumbnail_bytes) {
-            warn!("Failed to persist regenerated thumbnail for {}", image_id);
+            warn!("无法为 {} 持久化重新生成的缩略图", image_id);
         }
     }
 

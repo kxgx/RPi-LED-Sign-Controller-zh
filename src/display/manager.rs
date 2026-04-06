@@ -40,7 +40,7 @@ impl DisplayManager {
         let display_height = config.display_height();
 
         info!(
-            "Initializing display: {}x{} (rows={}, cols={}, chain={}, parallel={})",
+            "正在初始化显示: {}x{} (行数={}, 列数={}, 链长={}, 并行={})",
             display_width,
             display_height,
             config.rows,
@@ -94,7 +94,7 @@ impl DisplayManager {
         driver: Box<dyn LedDriver>,
     ) -> Self {
         // Log the playlist content to diagnose the issue
-        info!("Got the following {} items:", playlist.items.len());
+        info!("收到以下 {} 个项目:", playlist.items.len());
         for (i, item) in playlist.items.iter().enumerate() {
             let content_desc = match &item.content.data {
                 ContentDetails::Text(text_content) => {
@@ -103,10 +103,10 @@ impl DisplayManager {
                     } else {
                         text_content.text.clone()
                     };
-                    format!("Text: \"{}\"", preview)
+                    format!("文本: \"{}\"", preview)
                 }
                 ContentDetails::Image(image_content) => format!(
-                    "Image: {} ({}x{})",
+                    "图片: {} ({}x{})",
                     image_content.image_id,
                     image_content.natural_width,
                     image_content.natural_height
@@ -117,27 +117,27 @@ impl DisplayManager {
                         ClockFormat::TwelveHour => "12h",
                     };
                     let seconds_label = if clock_content.show_seconds {
-                        "showing seconds"
+                        "显示秒数"
                     } else {
-                        "minutes only"
+                        "仅显示分钟"
                     };
-                    format!("Clock: {} ({})", format_label, seconds_label)
+                    format!("时钟: {} ({})", format_label, seconds_label)
                 }
                 ContentDetails::Animation(animation_content) => {
                     let preset = match animation_content {
-                        AnimationContent::Pulse { .. } => "Pulse",
-                        AnimationContent::PaletteWave { .. } => "Palette Wave",
-                        AnimationContent::DualPulse { .. } => "Dual Pulse",
-                        AnimationContent::ColorFade { .. } => "Color Fade",
-                        AnimationContent::Strobe { .. } => "Strobe",
-                        AnimationContent::Sparkle { .. } => "Sparkle",
-                        AnimationContent::MosaicTwinkle { .. } => "Mosaic Twinkle",
-                        AnimationContent::Plasma { .. } => "Plasma Flow",
+                        AnimationContent::Pulse { .. } => "脉冲",
+                        AnimationContent::PaletteWave { .. } => "调色板波浪",
+                        AnimationContent::DualPulse { .. } => "双脉冲",
+                        AnimationContent::ColorFade { .. } => "颜色渐变",
+                        AnimationContent::Strobe { .. } => "频闪",
+                        AnimationContent::Sparkle { .. } => "闪烁",
+                        AnimationContent::MosaicTwinkle { .. } => "马赛克微光",
+                        AnimationContent::Plasma { .. } => "等离子流动",
                     };
-                    format!("Animation: {}", preset)
+                    format!("动画: {}", preset)
                 }
             };
-            info!("  Item {}: {}", i + 1, content_desc);
+            info!("  项目 {}: {}", i + 1, content_desc);
         }
 
         // Create a new display manager with the given config
@@ -177,7 +177,7 @@ impl DisplayManager {
                     content: ContentData {
                         content_type: ContentType::Text,
                         data: ContentDetails::Text(TextContent {
-                            text: format!("LED Matrix Controller | Web interface: http://{}:3000 | Use web UI to configure display", ip),
+                            text: format!("LED 矩阵控制器 | Web 界面: http://{}:3000 | 请使用 Web UI 配置显示", ip),
                             scroll: true,
                             color: [0, 255, 0],  // Green color for visibility
                             speed: 30.0,         // Slower for better readability
@@ -317,7 +317,7 @@ impl DisplayManager {
     }
 
     pub fn shutdown(&mut self) {
-        info!("Shutting down display manager");
+        info!("正在关闭显示管理器");
 
         // First clear the canvas if we have one
         if let Some(mut canvas) = self.canvas.take() {
@@ -337,8 +337,8 @@ impl DisplayManager {
         let brightness = brightness.clamp(0, 100);
 
         // Only log at debug level for continuous updates
-        // This won't show up unless RUST_LOG=debug is set
-        debug!("Updating display brightness: {}", brightness);
+        // 仅在 RUST_LOG=debug 设置时才会显示
+        debug!("更新显示亮度: {}", brightness);
 
         // Update the brightness in the config
         self.config.user_brightness = brightness;
@@ -419,7 +419,7 @@ impl DisplayManager {
 
         if !already_in_preview {
             // First-time preview mode setup
-            info!("Entering preview mode with session_id: {}", session_id);
+            info!("进入预览模式，会话 ID: {}", session_id);
         }
 
         // Use the common helper method
@@ -466,7 +466,7 @@ impl DisplayManager {
             let elapsed = self.last_preview_ping.elapsed().as_secs();
             if elapsed > timeout_seconds {
                 info!(
-                    "Preview mode timed out after {} seconds of inactivity",
+                    "预览模式在 {} 秒无活动后超时",
                     elapsed
                 );
                 // Store session ID before exiting preview mode
@@ -525,7 +525,7 @@ impl DisplayManager {
     pub fn exit_preview_mode(&mut self) {
         if self.preview_mode {
             info!(
-                "Exiting preview mode for session_id: {}",
+                "正在退出预览模式，会话 ID: {}",
                 self.preview_session_id.clone().unwrap_or_default()
             );
             self.preview_mode = false;

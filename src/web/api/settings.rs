@@ -64,9 +64,9 @@ pub async fn update_brightness(
             || settings.brightness == 0
             || settings.brightness == 100
         {
-            // Add more descriptive logging with percentages
+            // 增加更详细的日志，显示百分比
             info!(
-                "Display brightness: {}% -> {}%",
+                "显示亮度: {}% -> {}%",
                 prev_brightness, settings.brightness
             );
         }

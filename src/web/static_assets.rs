@@ -28,7 +28,7 @@ pub async fn next_assets_handler(req: Request) -> impl IntoResponse {
     let path = req.uri().path().trim_start_matches("/_next");
     let full_path = format!("_next{}", path);
 
-    debug!("Serving next asset: {}", full_path);
+    debug!("正在提供 next 资源: {}", full_path);
 
     // Try to get the file from the embedded assets
     match StaticAssets::get(&full_path) {
@@ -47,7 +47,7 @@ pub async fn next_assets_handler(req: Request) -> impl IntoResponse {
                 .into_response()
         }
         None => {
-            warn!("Next asset not found: {}", full_path);
+            warn!("Next 资源未找到: {}", full_path);
             StatusCode::NOT_FOUND.into_response()
         }
     }
@@ -57,7 +57,7 @@ pub async fn next_assets_handler(req: Request) -> impl IntoResponse {
 pub async fn static_assets_handler(Path(path): Path<String>) -> impl IntoResponse {
     let full_path = format!("static/{}", path);
 
-    debug!("Serving static asset: {}", full_path);
+    debug!("正在提供静态资源: {}", full_path);
 
     match StaticAssets::get(&path) {
         Some(content) => {
@@ -74,7 +74,7 @@ pub async fn static_assets_handler(Path(path): Path<String>) -> impl IntoRespons
                 .into_response()
         }
         None => {
-            warn!("Static asset not found: {}", path);
+            warn!("静态资源未找到: {}", path);
             StatusCode::NOT_FOUND.into_response()
         }
     }
