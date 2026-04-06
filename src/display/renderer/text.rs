@@ -234,17 +234,16 @@ impl TextRenderer {
         debug!("Rendering text: '{}', text_width: {}, display: {}x{}", 
                self.content.text, self.text_width, self.ctx.display_width, self.ctx.display_height);
         
-        // Vertical centering for ab_glyph
-        // In ab_glyph, position.y is the baseline
-        // Text extends from (baseline - ascent) to (baseline - descent)
-        // Visual center = baseline - (ascent + descent) / 2
-        // For centering at screen center: baseline = display_height/2 + (ascent + descent)/2
+        // Vertical centering using the exact formula from original repository
+        // Original from context.rs: (display_height / 2) + (font_height / 2) - baseline_adjustment
+        // where baseline_adjustment = 5
         let ascent = scaled_font.ascent();
         let descent = scaled_font.descent();
         let font_height = ascent - descent;
         
-        // Calculate baseline position for perfect vertical centering
-        let y_pos = (self.ctx.display_height as f32 / 2.0) + (ascent + descent) / 2.0;
+        // Use the original repository's centering formula
+        let baseline_adjustment = 5.0;
+        let y_pos = (self.ctx.display_height as f32 / 2.0) + (font_height / 2.0) - baseline_adjustment;
         
         debug!("y_pos: {}, ascent: {}, descent: {}, font_height: {}", y_pos, ascent, descent, font_height);
 
